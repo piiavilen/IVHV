@@ -29,7 +29,6 @@ public class VJ extends Application{
         TextField hakuKentta = new TextField();
         hakuKentta.setPromptText("Mökin nimi");
         Button hakuBt = new Button("Hae");
-
         // SLIDERIIN ASETETAAN MIN JA MAX PARAMETRIT JOTKA HAETAAN TIETOKANNASTA: MÖKKIEN PIENIN HINTA JA ISOIN HINTA
         Label hintaSliderLbl = new Label("Hinta: ");
         Slider hintaSlider = new Slider(0, 100, 50);
