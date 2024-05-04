@@ -9,8 +9,5 @@
         <module name="OHTKOODIA" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="OHTKOODIA" target="19" />
-    </bytecodeTargetLevel>
   </component>
 </project>
