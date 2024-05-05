@@ -3,8 +3,6 @@ import java.sql.*;
 public class TietokannanYhdistaminen {
     public static void main(String[] args) {
         //Make: en ole varma onkohan localhost nyt 3306 vai 3307
-        //Janne: 3306 antaa errorin java.sql.SQLException: Access denied for user 'root'@'localhost' (using password: NO)
-        //Janne: 3307 java.sql.SQLSyntaxErrorException: Unknown database 'vn'
         String url = "jdbc:mysql://localhost:3306/vn";
 
         String username = "root";
