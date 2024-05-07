@@ -16,6 +16,7 @@ public class VJ extends Application{
     public void start(Stage primaryStage) throws Exception {
 
         //Make kysyy: Mitä paneeleja? mitä näihin lisätään? Luodaanko tähän paneeli myös taulukolle?
+        //Aliisa vastaa: Nää on ne "uloimmat" paneelit missä on ne tabit, taulukot tulee varausTab borderpaneen
         BorderPane paneeli = new BorderPane();
         TabPane tabit = new TabPane();
 
@@ -24,6 +25,7 @@ public class VJ extends Application{
         BorderPane varausTabPaneeli = new BorderPane();
         varausTab.setContent(varausTabPaneeli);
         //Make kysyy: Mille tämä on paneeli? voisi nopean kommentin lisätä ken luonut
+        //Aliisa vastaa: Tämä paneeli on sitä varten, että voi lisätä ne suodatinelementit kaikki kätevästi peräjälkeen tohon ylös
         HBox ylaPaneeli = new HBox();
         varausTabPaneeli.setTop(ylaPaneeli);
         TextField hakuKentta = new TextField();
