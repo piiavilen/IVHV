@@ -9,9 +9,43 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.sql.*;
 
 
 public class VJ extends Application{
+
+    //Metodi, jolla syötetään mökin tiedot tietokantaan, EI TOIMI VIELÄ KOSKA ALUE_ID:LLÄ EI OLE ARVOA
+    //Source: https://stackoverflow.com/questions/59147960/how-to-insert-into-mysql-database-with-java
+    public void kirjoitaTietoKantaan(String mokkinimi, String katuosoite, double hinta, String kuvaus,
+                                     int henkilo, String varustelu) {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "INSERT INTO mokki (mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, mokkinimi);
+                preparedStatement.setString(2, katuosoite);
+                preparedStatement.setDouble(3, hinta);
+                preparedStatement.setString(4, kuvaus);
+                preparedStatement.setInt(5, henkilo);
+                preparedStatement.setString(6, varustelu);
+
+                int affectedRows = preparedStatement.executeUpdate();
+
+                if (affectedRows > 0) {
+                    System.out.println("Tiedot tallennetuivat");
+                } else {
+                    System.out.println("Jokin meni pieleen");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+
 
     public void start(Stage primaryStage) throws Exception {
 
@@ -75,13 +109,6 @@ public class VJ extends Application{
         // Lisää taulukko BorderPaneen
         varausTabPaneeli.setCenter(mokkiTableView);
 
-        // Komponentit tässä satunnaisessa järjestyksessä alustavasti, tiedonsyöttö nappi sijoitetaan ehkä muualle
-        ylaPaneeli.getChildren().addAll(hakuKentta, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt);
-
-
-
-
-
         // TÄSSÄ HUOMIO, muissa kentissä on täällä textfield mutta kuvaukseen käytetään TextArea oliota
         // Alustavasti mahdollista syöttää pelkkiä mökkejä, koitetaan saada ensin tämä toimimaan ja sitten vasta palvelut
         Button mokkiTiedonSyottoBt = new Button("Lisää uusi mökki");
@@ -89,14 +116,17 @@ public class VJ extends Application{
             Stage stage = new Stage();
             stage.setTitle("Lisää uusi mökki");
 
+            /* HUOMIO TÄSSÄ, postinro ja alue on viittauksia niihin toisiin tauluihin (refer to ER-kaavio) niiiin en tiedä oikein
+            et mitä tähän. Pitäiskö se olla sit silleen, että alueen syöttö kohta johonkin ja sitä kautta tähän textfieldin
+            tilalle dropdown menu josta valitaan se alue ja se asettaa postinumeron sit sen mukaan automaattisesti ???*/
             VBox mtsPaneeli = new VBox();
             mtsPaneeli.setSpacing(5);
             Label nimiLbl = new Label("Mökin nimi:");
             TextField nimiTf = new TextField();
-            Label alueLbl = new Label("Alue:");
-            TextField alueTf = new TextField();
-            Label postiLbl = new Label("Postinumero:");
-            TextField postiTf = new TextField();
+            //Label alueLbl = new Label("Alue:");
+            //TextField alueTf = new TextField();
+            //Label postiLbl = new Label("Postinumero:");
+            //TextField postiTf = new TextField();
             Label osoiteLbl = new Label("Osoite:");
             TextField osoiteTf = new TextField();
             Label hintaLbl = new Label("Hinta:");
@@ -109,7 +139,20 @@ public class VJ extends Application{
             TextField varusteluTf = new TextField();
             Button tallennaMokkiBt = new Button("Tallenna tiedot");
 
-            mtsPaneeli.getChildren().addAll(nimiLbl, nimiTf, alueLbl, alueTf, postiLbl, postiTf, osoiteLbl, osoiteTf,
+            tallennaMokkiBt.setOnAction(p -> {
+                String mokkinimi = nimiTf.getText();
+                //String alue = alueTf.getText();
+                //int postiNro = Integer.parseInt(postiTf.getText());
+                String katuosoite = osoiteTf.getText();
+                double hinta = Double.parseDouble(hintaTf.getText());
+                String kuvaus = kuvausTa.getText();
+                int henkilo = Integer.parseInt(henkiloTf.getText());
+                String varustelu = varusteluTf.getText();
+                kirjoitaTietoKantaan(mokkinimi, katuosoite, hinta, kuvaus, henkilo, varustelu);
+
+            });
+
+            mtsPaneeli.getChildren().addAll(nimiLbl, nimiTf, /*alueLbl, alueTf, postiLbl, postiTf,*/ osoiteLbl, osoiteTf,
                     hintaLbl, hintaTf, kuvausLbl, kuvausTa, henkiloLbl, henkiloTf, varusteluLbl, varusteluTf,
                     tallennaMokkiBt);
 
@@ -118,7 +161,8 @@ public class VJ extends Application{
             stage.show();
         });
 
-        // Komponentit tässä satunnaisessa järjestyksessä alustavasti, tiedonsyöttö nappi sijoitetaan ehkä muualle
+        ylaPaneeli.getChildren().addAll(hakuKentta, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt, mokkiTiedonSyottoBt);
+
         /*MAKEN NOTE! Koodi ei aja, jos alla oleva rivi käytössä? Mikä mahtaa olla syynä? Tämän takia laitoin sen kommentteihin.
         Pitää ehkä luoda oma paneeli taulukoille? Ja yhdistää kaksi paneelia root-paneen. Näin tein omassa javaharkkatyössä ja toimi.
          */
