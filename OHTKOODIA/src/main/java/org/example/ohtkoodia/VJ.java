@@ -24,7 +24,7 @@ public class VJ extends Application{
         String password = "password";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String sql = "INSERT INTO mokki (mokki_id, alue_id, postinro,mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO mokki (mokki_id, alue_id, postinro,mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, String.valueOf(mokki_id));
                 preparedStatement.setString(2, String.valueOf(alue_id));
