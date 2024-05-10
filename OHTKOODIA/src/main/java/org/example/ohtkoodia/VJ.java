@@ -15,22 +15,26 @@ import java.sql.*;
 public class VJ extends Application{
 
     //Metodi, jolla syötetään mökin tiedot tietokantaan, EI TOIMI VIELÄ KOSKA ALUE_ID:LLÄ EI OLE ARVOA
+    //Ei toimi, koska se alue pitää lisätä sinne kyselylomakkeeseen
     //Source: https://stackoverflow.com/questions/59147960/how-to-insert-into-mysql-database-with-java
-    public void kirjoitaTietoKantaan(String mokkinimi, String katuosoite, double hinta, String kuvaus,
+    public void kirjoitaTietoKantaan(int mokki_id, int alue_id, int postinro, String mokkinimi, String katuosoite, double hinta, String kuvaus,
                                      int henkilo, String varustelu) {
         String url = "jdbc:mysql://localhost:3307/vn";
         String username = "pmauser";
         String password = "password";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String sql = "INSERT INTO mokki (mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO mokki (mokki_id, alue_id, postinro,mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, mokkinimi);
-                preparedStatement.setString(2, katuosoite);
-                preparedStatement.setDouble(3, hinta);
-                preparedStatement.setString(4, kuvaus);
-                preparedStatement.setInt(5, henkilo);
-                preparedStatement.setString(6, varustelu);
+                preparedStatement.setString(1, String.valueOf(mokki_id));
+                preparedStatement.setString(2, String.valueOf(alue_id));
+                preparedStatement.setString(3, String.valueOf(postinro));
+                preparedStatement.setString(4, mokkinimi);
+                preparedStatement.setString(5, katuosoite);
+                preparedStatement.setDouble(6, hinta);
+                preparedStatement.setString(7, kuvaus);
+                preparedStatement.setInt(8, henkilo);
+                preparedStatement.setString(9, varustelu);
 
                 int affectedRows = preparedStatement.executeUpdate();
 
@@ -121,12 +125,20 @@ public class VJ extends Application{
             tilalle dropdown menu josta valitaan se alue ja se asettaa postinumeron sit sen mukaan automaattisesti ???*/
             VBox mtsPaneeli = new VBox();
             mtsPaneeli.setSpacing(5);
+            Label mokkiIdLbl = new Label("Mökin ID:");
+            TextField mokkiIdTf = new TextField();
+
             Label nimiLbl = new Label("Mökin nimi:");
             TextField nimiTf = new TextField();
+
+
             //Label alueLbl = new Label("Alue:");
             //TextField alueTf = new TextField();
-            //Label postiLbl = new Label("Postinumero:");
-            //TextField postiTf = new TextField();
+            Label alueIdlbl = new Label("Alueen ID:");
+            TextField alueIdTf = new TextField();
+
+            Label postiLbl = new Label("Postinumero:");
+            TextField postiTf = new TextField();
             Label osoiteLbl = new Label("Osoite:");
             TextField osoiteTf = new TextField();
             Label hintaLbl = new Label("Hinta:");
@@ -140,19 +152,20 @@ public class VJ extends Application{
             Button tallennaMokkiBt = new Button("Tallenna tiedot");
 
             tallennaMokkiBt.setOnAction(p -> {
+                int mokkiID = Integer.parseInt(mokkiIdTf.getText());
                 String mokkinimi = nimiTf.getText();
-                //String alue = alueTf.getText();
-                //int postiNro = Integer.parseInt(postiTf.getText());
+                int alueID = Integer.parseInt(alueIdTf.getText());
+                int postiNro = Integer.parseInt(postiTf.getText());
                 String katuosoite = osoiteTf.getText();
                 double hinta = Double.parseDouble(hintaTf.getText());
                 String kuvaus = kuvausTa.getText();
                 int henkilo = Integer.parseInt(henkiloTf.getText());
                 String varustelu = varusteluTf.getText();
-                kirjoitaTietoKantaan(mokkinimi, katuosoite, hinta, kuvaus, henkilo, varustelu);
+                kirjoitaTietoKantaan(mokkiID, postiNro, alueID,katuosoite, mokkinimi,hinta, kuvaus, henkilo, varustelu);
 
             });
 
-            mtsPaneeli.getChildren().addAll(nimiLbl, nimiTf, /*alueLbl, alueTf, postiLbl, postiTf,*/ osoiteLbl, osoiteTf,
+            mtsPaneeli.getChildren().addAll(mokkiIdLbl, mokkiIdTf, nimiLbl, nimiTf, alueIdlbl, alueIdTf, postiLbl, postiTf, osoiteLbl, osoiteTf,
                     hintaLbl, hintaTf, kuvausLbl, kuvausTa, henkiloLbl, henkiloTf, varusteluLbl, varusteluTf,
                     tallennaMokkiBt);
 
