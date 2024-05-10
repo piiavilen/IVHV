@@ -15,8 +15,16 @@ import java.sql.*;
 public class VJ extends Application{
 
     //Metodi, jolla syötetään mökin tiedot tietokantaan, EI TOIMI VIELÄ KOSKA ALUE_ID:LLÄ EI OLE ARVOA
-    //Ei toimi, koska se alue pitää lisätä sinne kyselylomakkeeseen
+    /*update t.make: ei toimi, koska kysely huutaa rajoitteiden epäonnistumisesta. Googlauksella ongelma olisi, ettei alue_ID:eeseen'
+    * syötettyä dataa ole alkuperäisessä taulussa mihin referoidaan (taulusta mökki referoidaan tauluun alue.
+    * data kuitenkin on paikallaan ja kaiken pitäisi toimia? Toinen vaihtoehto on, että rajoitteet on sekaisin/viittaavat
+    * vääriin kolumneihin.
+    *
+    * Korjasin kuitenkin alla olevan metodin (ja muun koodin) niin, että sen pitäisi toimia, jos yllä olevaa ongelmaa ei
+    * oteta huomioon*/
     //Source: https://stackoverflow.com/questions/59147960/how-to-insert-into-mysql-database-with-java
+    //https://stackoverflow.com/questions/5005388/cannot-add-or-update-a-child-row-a-foreign-key-constraint-fails
+    //https://stackoverflow.com/questions/59956372/sql-server-foreign-key-constraint-error-but-data-exists
     public void kirjoitaTietoKantaan(int mokki_id, int alue_id, int postinro, String mokkinimi, String katuosoite, double hinta, String kuvaus,
                                      int henkilo, String varustelu) {
         String url = "jdbc:mysql://localhost:3307/vn";
@@ -26,9 +34,9 @@ public class VJ extends Application{
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             String sql = "INSERT INTO mokki (mokki_id, alue_id, postinro,mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, String.valueOf(mokki_id));
-                preparedStatement.setString(2, String.valueOf(alue_id));
-                preparedStatement.setString(3, String.valueOf(postinro));
+                preparedStatement.setInt(1, mokki_id);
+                preparedStatement.setInt(2, alue_id);
+                preparedStatement.setInt(3, postinro);
                 preparedStatement.setString(4, mokkinimi);
                 preparedStatement.setString(5, katuosoite);
                 preparedStatement.setDouble(6, hinta);
