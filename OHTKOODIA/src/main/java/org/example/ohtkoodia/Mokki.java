@@ -9,22 +9,27 @@ public class Mokki implements Serializable {
     //Mökin taulukkoon tarvittavat kentät, muutettavissa tarpeen mukaan.
 
     protected String nimi;
-    protected int postinro;
+    protected String osoite;
+    protected String postinro;
     protected double hinta;
+    protected String kuvaus;
     protected int hlomaara;
     protected String varustelu;
 
     //Mökin parametrillinen alustaja
-
-    public Mokki(String nimi, int postinro, double hinta, int hlomaara, String varustelu){
-        this.setNimi(nimi);
-        this.setPostinro(postinro);
-        this.setHinta(hinta);
-        this.setHlomaara(hlomaara);
-        this.setVarustelu(varustelu);
+    public Mokki(String nimi, String osoite, String postinro, double hinta, String kuvaus, int hlomaara, String varustelu) {
+        this.nimi = nimi;
+        this.osoite = osoite;
+        this.postinro = postinro;
+        this.hinta = hinta;
+        this.kuvaus = kuvaus;
+        this.hlomaara = hlomaara;
+        this.varustelu = varustelu;
     }
 
     //Generoidaan IntelliJ työkalulla getterit/setterit
+
+
     public String getNimi() {
         return nimi;
     }
@@ -33,11 +38,19 @@ public class Mokki implements Serializable {
         this.nimi = nimi;
     }
 
-    public int getPostinro() {
+    public String getOsoite() {
+        return osoite;
+    }
+
+    public void setOsoite(String osoite) {
+        this.osoite = osoite;
+    }
+
+    public String getPostinro() {
         return postinro;
     }
 
-    public void setPostinro(int postinro) {
+    public void setPostinro(String postinro) {
         this.postinro = postinro;
     }
 
@@ -47,6 +60,14 @@ public class Mokki implements Serializable {
 
     public void setHinta(double hinta) {
         this.hinta = hinta;
+    }
+
+    public String getKuvaus() {
+        return kuvaus;
+    }
+
+    public void setKuvaus(String kuvaus) {
+        this.kuvaus = kuvaus;
     }
 
     public int getHlomaara() {
@@ -64,7 +85,4 @@ public class Mokki implements Serializable {
     public void setVarustelu(String varustelu) {
         this.varustelu = varustelu;
     }
-
-
-
 }

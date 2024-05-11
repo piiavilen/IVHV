@@ -1,6 +1,8 @@
 package org.example.ohtkoodia;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -14,35 +16,29 @@ import java.sql.*;
 
 public class VJ extends Application{
 
-    //Metodi, jolla syötetään mökin tiedot tietokantaan, EI TOIMI VIELÄ KOSKA ALUE_ID:LLÄ EI OLE ARVOA
-    /*update t.make: ei toimi, koska kysely huutaa rajoitteiden epäonnistumisesta. Googlauksella ongelma olisi, ettei alue_ID:eeseen'
-    * syötettyä dataa ole alkuperäisessä taulussa mihin referoidaan (taulusta mökki referoidaan tauluun alue.
-    * data kuitenkin on paikallaan ja kaiken pitäisi toimia? Toinen vaihtoehto on, että rajoitteet on sekaisin/viittaavat
-    * vääriin kolumneihin.
-    *
-    * Korjasin kuitenkin alla olevan metodin (ja muun koodin) niin, että sen pitäisi toimia, jos yllä olevaa ongelmaa ei
-    * oteta huomioon*/
+    //----------------------------METODIT------------------------------------------------------------------------------
+
     //Source: https://stackoverflow.com/questions/59147960/how-to-insert-into-mysql-database-with-java
     //https://stackoverflow.com/questions/5005388/cannot-add-or-update-a-child-row-a-foreign-key-constraint-fails
     //https://stackoverflow.com/questions/59956372/sql-server-foreign-key-constraint-error-but-data-exists
-    public void kirjoitaTietoKantaan(int mokki_id, int alue_id, int postinro, String mokkinimi, String katuosoite, double hinta, String kuvaus,
-                                     int henkilo, String varustelu) {
+    public void kirjoitaMokkiTietokantaan(int alue_id, String postiNro, String mokkinimi, String katuosoite, double hinta, String kuvaus,
+                                          int henkilo, String varustelu) {
         String url = "jdbc:mysql://localhost:3307/vn";
         String username = "pmauser";
         String password = "password";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String sql = "INSERT INTO mokki (mokki_id, alue_id, postinro,mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
+            String sql = "INSERT INTO mokki (alue_id, postinro, mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setInt(1, mokki_id);
-                preparedStatement.setInt(2, alue_id);
-                preparedStatement.setInt(3, postinro);
-                preparedStatement.setString(4, mokkinimi);
-                preparedStatement.setString(5, katuosoite);
-                preparedStatement.setDouble(6, hinta);
-                preparedStatement.setString(7, kuvaus);
-                preparedStatement.setInt(8, henkilo);
-                preparedStatement.setString(9, varustelu);
+                preparedStatement.setInt(1, alue_id);
+                preparedStatement.setString(2, postiNro);
+                preparedStatement.setString(3, mokkinimi);
+                preparedStatement.setString(4, katuosoite);
+                preparedStatement.setDouble(5, hinta);
+                preparedStatement.setString(6, kuvaus);
+                preparedStatement.setInt(7, henkilo);
+                preparedStatement.setString(8, varustelu);
+
 
                 int affectedRows = preparedStatement.executeUpdate();
 
@@ -57,8 +53,134 @@ public class VJ extends Application{
         }
     }
 
+    public void kirjoitaAlueTietokantaan(String nimi) {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "INSERT INTO alue (nimi) VALUES (?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, nimi);
+
+                int affectedRows = preparedStatement.executeUpdate();
+
+                if (affectedRows > 0) {
+                    System.out.println("Tiedot tallennetuivat");
+                } else {
+                    System.out.println("Jokin meni pieleen");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public int haeAlueId(String alueNimi) {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        int alueId = -1;
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT alue_id FROM alue WHERE nimi = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, alueNimi);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        alueId = resultSet.getInt("alue_id");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return alueId;
+    }
+
+    public ObservableList<String> haeAlueetTietokannasta() {
+        ObservableList<String> alueNimet = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT nimi FROM alue";
+            try (Statement statement = connection.createStatement()) {
+                ResultSet resultSet = statement.executeQuery(query);
+                while (resultSet.next()) {
+                    String alueNimi = resultSet.getString("nimi");
+                    alueNimet.add(alueNimi);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return alueNimet;
+    }
+
+    public void kirjoitaAsiakasTietokantaan(String postiNro, String etuNimi, String sukuNimi, String lahiosoite,
+                                            String email, String puhelinNro) {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "INSERT INTO asiakas (postinro, etunimi, sukunimi, lahiosoite, email, puhelinnro) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, postiNro);
+                preparedStatement.setString(2, etuNimi);
+                preparedStatement.setString(3, sukuNimi);
+                preparedStatement.setString(4, lahiosoite);
+                preparedStatement.setString(5, email);
+                preparedStatement.setString(6, puhelinNro);
+
+                int affectedRows = preparedStatement.executeUpdate();
+
+                if (affectedRows > 0) {
+                    System.out.println("Tiedot tallennetuivat");
+                } else {
+                    System.out.println("Jokin meni pieleen");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public ObservableList<Mokki> haeMokitTietokannasta() {
+        ObservableList<Mokki> mokkiTiedot = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM mokki";
+            try (Statement statement = connection.createStatement()) {
+                ResultSet resultSet = statement.executeQuery(query);
+                while (resultSet.next()) {
+                    Mokki mokki = new Mokki(resultSet.getString("mokkinimi"),
+                            resultSet.getString("katuosoite"),
+                            resultSet.getString("postinro"),
+                            resultSet.getDouble("hinta"),
+                            resultSet.getString("kuvaus"),
+                            resultSet.getInt("henkilomaara"),
+                            resultSet.getString("varustelu"));
+                    mokkiTiedot.add(mokki);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return mokkiTiedot;
+
+    }
 
 
+
+    //--------------------------------------UI-------------------------------------------------------------------------
     public void start(Stage primaryStage) throws Exception {
 
         //Make kysyy: Mitä paneeleja? mitä näihin lisätään? Luodaanko tähän paneeli myös taulukolle?
@@ -89,10 +211,14 @@ public class VJ extends Application{
         //-----------------------------MÖKKITAULUKKO-------------------------------------
         // Luo TableView
         TableView<Mokki> mokkiTableView = new TableView<>();
-
+        // Luo ObservableList
+        ObservableList<Mokki> mokki = FXCollections.observableArrayList();
         // Luo sarakkeet
         TableColumn<Mokki, String> nimiMOKKIColumn = new TableColumn<>("Nimi");
         nimiMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("nimi"));
+
+        TableColumn<Mokki, String> osoiteMOKKIColumn = new TableColumn<>("osoite");
+        osoiteMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("osoite"));
 
         TableColumn<Mokki, Integer> postinroMOKKIColumn = new TableColumn<>("Postinumero");
         postinroMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("postinumero"));
@@ -100,11 +226,18 @@ public class VJ extends Application{
         TableColumn<Mokki, Double> hintaMOKKIColumn = new TableColumn<>("Hinta");
         hintaMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("hinta"));
 
+        TableColumn<Mokki, Double> kuvausMOKKIColumn = new TableColumn<>("Kuvaus");
+        kuvausMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("kuvaus"));
+
         TableColumn<Mokki, Integer> hlomaaraMOKKIColumn = new TableColumn<>("Henkilömäärä");
         hlomaaraMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("henkilomaara"));
 
         TableColumn<Mokki, String> varusteluMOKKIColumn = new TableColumn<>("Varustelu");
         varusteluMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("varustelu"));
+
+        mokki.addAll(haeMokitTietokannasta());
+
+        mokkiTableView.setItems(mokki);
 
         //TÄHÄN TULISI VARAUS-PAINIKKEEN LUONTI JA TOIMINNALLISUUS, PALATAAN TÄHÄN MYÖHEMMIN!!!
         /*Marjutilla osa tätä koodia ja sen toiminnallisuutta, katsotaan backend-vaiheessa
@@ -116,7 +249,8 @@ public class VJ extends Application{
         */
 
         // Lisää sarakkeet taulukkoon
-        mokkiTableView.getColumns().addAll(nimiMOKKIColumn, postinroMOKKIColumn, hintaMOKKIColumn, hlomaaraMOKKIColumn, varusteluMOKKIColumn);//Muistetaan lisätä varausbtn
+        mokkiTableView.getColumns().addAll(nimiMOKKIColumn, osoiteMOKKIColumn, postinroMOKKIColumn, hintaMOKKIColumn,
+                kuvausMOKKIColumn, hlomaaraMOKKIColumn, varusteluMOKKIColumn);//Muistetaan lisätä varausbtn
 
         // Lisää taulukko BorderPaneen
         varausTabPaneeli.setCenter(mokkiTableView);
@@ -133,47 +267,48 @@ public class VJ extends Application{
             tilalle dropdown menu josta valitaan se alue ja se asettaa postinumeron sit sen mukaan automaattisesti ???*/
             VBox mtsPaneeli = new VBox();
             mtsPaneeli.setSpacing(5);
-            Label mokkiIdLbl = new Label("Mökin ID:");
-            TextField mokkiIdTf = new TextField();
 
             Label nimiLbl = new Label("Mökin nimi:");
             TextField nimiTf = new TextField();
 
+            Label alueLbl = new Label("Alue:");
+            ComboBox<String> alueCB = new ComboBox<>();
+            alueCB.setItems(haeAlueetTietokannasta());
 
-            //Label alueLbl = new Label("Alue:");
-            //TextField alueTf = new TextField();
-            Label alueIdlbl = new Label("Alueen ID:");
-            TextField alueIdTf = new TextField();
-
-            Label postiLbl = new Label("Postinumero:");
-            TextField postiTf = new TextField();
             Label osoiteLbl = new Label("Osoite:");
             TextField osoiteTf = new TextField();
+
+            Label postiNroLbl = new Label("Postinumero");
+            TextField postiNroTf = new TextField();
+
             Label hintaLbl = new Label("Hinta:");
             TextField hintaTf = new TextField();
+
             Label kuvausLbl = new Label("Mökin kuvaus:");
             TextArea kuvausTa = new TextArea();
+
             Label henkiloLbl = new Label("Henkilömäärä:");
             TextField henkiloTf = new TextField();
+
             Label varusteluLbl = new Label("Varustelu:");
             TextField varusteluTf = new TextField();
+
             Button tallennaMokkiBt = new Button("Tallenna tiedot");
 
             tallennaMokkiBt.setOnAction(p -> {
-                int mokkiID = Integer.parseInt(mokkiIdTf.getText());
+                String alueNimi = alueCB.getValue();
+                int alueId = haeAlueId(alueNimi);
+                String postiNro = postiNroTf.getText();
                 String mokkinimi = nimiTf.getText();
-                int alueID = Integer.parseInt(alueIdTf.getText());
-                int postiNro = Integer.parseInt(postiTf.getText());
                 String katuosoite = osoiteTf.getText();
                 double hinta = Double.parseDouble(hintaTf.getText());
                 String kuvaus = kuvausTa.getText();
                 int henkilo = Integer.parseInt(henkiloTf.getText());
                 String varustelu = varusteluTf.getText();
-                kirjoitaTietoKantaan(mokkiID, postiNro, alueID,katuosoite, mokkinimi,hinta, kuvaus, henkilo, varustelu);
-
+                kirjoitaMokkiTietokantaan(alueId, postiNro, mokkinimi, katuosoite, hinta, kuvaus, henkilo, varustelu);
             });
 
-            mtsPaneeli.getChildren().addAll(mokkiIdLbl, mokkiIdTf, nimiLbl, nimiTf, alueIdlbl, alueIdTf, postiLbl, postiTf, osoiteLbl, osoiteTf,
+            mtsPaneeli.getChildren().addAll(nimiLbl, nimiTf, alueLbl, alueCB, osoiteLbl, osoiteTf, postiNroLbl, postiNroTf,
                     hintaLbl, hintaTf, kuvausLbl, kuvausTa, henkiloLbl, henkiloTf, varusteluLbl, varusteluTf,
                     tallennaMokkiBt);
 
@@ -182,7 +317,32 @@ public class VJ extends Application{
             stage.show();
         });
 
-        ylaPaneeli.getChildren().addAll(hakuKentta, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt, mokkiTiedonSyottoBt);
+        // Nappi, joka avaa ikkunan, josta alueita voidaan syöttää tietokantaan
+        Button alueTiedonSyottoBt = new Button("Lisää uusi alue");
+        alueTiedonSyottoBt.setOnAction(e -> {
+            Stage stage = new Stage();
+            stage.setTitle("Lisää uusi alue");
+            VBox atsPaneeli = new VBox();
+            atsPaneeli.setSpacing(5);
+
+            Label alueNimiLbl = new Label("Alueen nimi:");
+            TextField alueNimiTf = new TextField();
+            Button tallennaAlueBt = new Button("Tallenna tiedot");
+
+            tallennaAlueBt.setOnAction(p -> {
+                String alueNimi = alueNimiTf.getText();
+                kirjoitaAlueTietokantaan(alueNimi);
+            });
+
+            atsPaneeli.getChildren().addAll(alueNimiLbl, alueNimiTf, tallennaAlueBt);
+
+            Scene scene = new Scene(atsPaneeli, 400, 400);
+            stage.setScene(scene);
+            stage.show();
+                });
+
+
+        ylaPaneeli.getChildren().addAll(hakuKentta, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt, mokkiTiedonSyottoBt, alueTiedonSyottoBt);
 
         /*MAKEN NOTE! Koodi ei aja, jos alla oleva rivi käytössä? Mikä mahtaa olla syynä? Tämän takia laitoin sen kommentteihin.
         Pitää ehkä luoda oma paneeli taulukoille? Ja yhdistää kaksi paneelia root-paneen. Näin tein omassa javaharkkatyössä ja toimi.
@@ -198,7 +358,7 @@ public class VJ extends Application{
         asiakasTiedonSyottoBt.setOnAction(e -> {
             Stage stage = new Stage();
             stage.setTitle("Syötä asiakastiedot");
-
+            //postinumero nyt alustavasti vain noin, katsotaan yhdessä miten se sisällytetään tähän
             VBox atsPaneeli = new VBox();
             atsPaneeli.setSpacing(5);
             Label etuNimiLbl = new Label("Etunimi:");
@@ -207,19 +367,35 @@ public class VJ extends Application{
             TextField sukuNimiTf = new TextField();
             Label asiaksOsoiteLbl = new Label("Osoite:");
             TextField asiakasOsoiteTf = new TextField();
+            Label postiNroLbl = new Label("Postinumero:");
+            TextField postiNroTF = new TextField();
             Label emailLbl = new Label("Sähköposti:");
             TextField emailTf = new TextField();
             Label puhelinnroLbl = new Label("Puhelinnumero:");
             TextField puhelinnroTf = new TextField();
             Button tallennaAsiakasBt = new Button("Tallenna tiedot");
 
+            tallennaAsiakasBt.setOnAction(p -> {
+                String postiNro = postiNroTF.getText();
+                String etuNimi = etuNimiTf.getText();
+                String sukuNimi = sukuNimiTf.getText();
+                String lahiOsoite = asiakasOsoiteTf.getText();
+                String email = emailTf.getText();
+                String puhelinNro = puhelinnroTf.getText();
+
+                kirjoitaAsiakasTietokantaan(postiNro, etuNimi, sukuNimi, lahiOsoite, email, puhelinNro);
+
+
+            });
+
             atsPaneeli.getChildren().addAll(etuNimiLbl, etuNimiTf, sukuNimiLbl, sukuNimiTf, asiaksOsoiteLbl,
-                    asiakasOsoiteTf, emailLbl, emailTf, puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
+                    asiakasOsoiteTf, postiNroLbl, postiNroTF, emailLbl, emailTf, puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
 
             Scene scene = new Scene(atsPaneeli, 400, 400);
             stage.setScene(scene);
             stage.show();
         });
+
         //----------------------------------------------------------TABLEVIEW-----------------------------------------
         // Luo TableView
         TableView<Varaukset> laskuTableView = new TableView<>();
@@ -245,8 +421,7 @@ public class VJ extends Application{
         tabit.getTabs().addAll(varausTab, laskuTab);
         paneeli.setCenter(tabit);
 
-        // Kokoa pitää ehkä adjustaa vielä kunhan saadaan mökkilista näkyviin
-        Scene scene = new Scene(paneeli, 600, 600);
+        Scene scene = new Scene(paneeli, 800, 600);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Mökin varausjärjestelmä");
         primaryStage.show();
