@@ -21,6 +21,8 @@ public class VJ extends Application{
     //Source: https://stackoverflow.com/questions/59147960/how-to-insert-into-mysql-database-with-java
     //https://stackoverflow.com/questions/5005388/cannot-add-or-update-a-child-row-a-foreign-key-constraint-fails
     //https://stackoverflow.com/questions/59956372/sql-server-foreign-key-constraint-error-but-data-exists
+
+    // Metodi, joka syöttää mökin tiedot mokki-tauluun
     public void kirjoitaMokkiTietokantaan(int alue_id, String postiNro, String mokkinimi, String katuosoite, double hinta, String kuvaus,
                                           int henkilo, String varustelu) {
         String url = "jdbc:mysql://localhost:3307/vn";
@@ -53,6 +55,7 @@ public class VJ extends Application{
         }
     }
 
+    // Metodi, joka kirjoittaa alueen tiedot tietokantaan
     public void kirjoitaAlueTietokantaan(String nimi) {
         String url = "jdbc:mysql://localhost:3307/vn";
         String username = "pmauser";
@@ -76,6 +79,7 @@ public class VJ extends Application{
         }
     }
 
+    // Metodi, joka hakee aluenimen perusteella oikean alue_id:n ja syöttää sen mokki-tauluun alue_id:seen
     public int haeAlueId(String alueNimi) {
         String url = "jdbc:mysql://localhost:3307/vn";
         String username = "pmauser";
@@ -100,6 +104,7 @@ public class VJ extends Application{
         return alueId;
     }
 
+    // Metodi, joka hakee kaikki aluenimet tietokannasta
     public ObservableList<String> haeAlueetTietokannasta() {
         ObservableList<String> alueNimet = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn";
@@ -121,6 +126,7 @@ public class VJ extends Application{
         return alueNimet;
     }
 
+    // Metodi, joka kirjoittaa asiakastiedot tietokantaan
     public void kirjoitaAsiakasTietokantaan(String postiNro, String etuNimi, String sukuNimi, String lahiosoite,
                                             String email, String puhelinNro) {
         String url = "jdbc:mysql://localhost:3307/vn";
@@ -150,6 +156,7 @@ public class VJ extends Application{
         }
     }
 
+    // Metodi, joka palauttaa mökkien tiedot sisältävän listan tietokannasta
     public ObservableList<Mokki> haeMokitTietokannasta() {
         ObservableList<Mokki> mokkiTiedot = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn";
@@ -177,6 +184,7 @@ public class VJ extends Application{
         return mokkiTiedot;
     }
 
+    // Metodi, joka kirjoittaa postinumeron ja toimipaikan tietokantaan
     public void kirjoitaPostiNroTietokantaan(String postiNro, String toimiPaikka) {
         String url = "jdbc:mysql://localhost:3307/vn";
         String username = "pmauser";
@@ -200,6 +208,7 @@ public class VJ extends Application{
         }
     }
 
+    // Metodi, joka palauttaa tietokannasta kaikki postinumerot sisältävän listan
     public ObservableList<String> haePostiNroTietokannasta() {
         ObservableList<String> postiNumerot = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn";
@@ -221,6 +230,7 @@ public class VJ extends Application{
         return postiNumerot;
     }
 
+    // Metodi, joka palauttaa tietokannasta listan kaikista laskuista
     public ObservableList<Laskut> haeLaskutTietokannasta() {
         ObservableList<Laskut> laskuTiedot = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn";
@@ -251,8 +261,6 @@ public class VJ extends Application{
     //--------------------------------------UI-------------------------------------------------------------------------
     public void start(Stage primaryStage) throws Exception {
 
-        //Make kysyy: Mitä paneeleja? mitä näihin lisätään? Luodaanko tähän paneeli myös taulukolle?
-        //Aliisa vastaa: Nää on ne "uloimmat" paneelit missä on ne tabit, taulukot tulee varausTab borderpaneen
         BorderPane paneeli = new BorderPane();
         TabPane tabit = new TabPane();
 
@@ -260,14 +268,11 @@ public class VJ extends Application{
         Tab mokkiTab = new Tab("Mökit");
         BorderPane mokkiTabPaneeli = new BorderPane();
         mokkiTab.setContent(mokkiTabPaneeli);
-        //Make kysyy: Mille tämä on paneeli? voisi nopean kommentin lisätä ken luonut
-        //Aliisa vastaa: Tämä paneeli on sitä varten, että voi lisätä ne suodatinelementit kaikki kätevästi peräjälkeen tohon ylös
         HBox ylaPaneeli = new HBox();
         mokkiTabPaneeli.setTop(ylaPaneeli);
         TextField hakuKentta = new TextField();
         hakuKentta.setPromptText("Mökin nimi");
         Button hakuBt = new Button("Hae");
-        // SLIDERIIN ASETETAAN MIN JA MAX PARAMETRIT JOTKA HAETAAN TIETOKANNASTA: MÖKKIEN PIENIN HINTA JA ISOIN HINTA
         Label hintaSliderLbl = new Label("Hinta: ");
         Slider hintaSlider = new Slider(0, 100, 50);
         Label hintaArvoLbl = new Label(hintaSlider.getValue() + "€");
@@ -302,9 +307,9 @@ public class VJ extends Application{
 
         TableColumn<Mokki, String> varusteluMOKKIColumn = new TableColumn<>("Varustelu");
         varusteluMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("varustelu"));
-
+        // Lisää mökit ObservableListiin
         mokki.addAll(haeMokitTietokannasta());
-
+        // Aseta Observablelistin sisältö TableViewiin
         mokkiTableView.setItems(mokki);
 
         //TÄHÄN TULISI VARAUS-PAINIKKEEN LUONTI JA TOIMINNALLISUUS, PALATAAN TÄHÄN MYÖHEMMIN!!!
@@ -323,25 +328,20 @@ public class VJ extends Application{
         // Lisää taulukko BorderPaneen
         mokkiTabPaneeli.setCenter(mokkiTableView);
 
-        // TÄSSÄ HUOMIO, muissa kentissä on täällä textfield mutta kuvaukseen käytetään TextArea oliota
-        // Alustavasti mahdollista syöttää pelkkiä mökkejä, koitetaan saada ensin tämä toimimaan ja sitten vasta palvelut
+        // Button, joka avaa ikkunan, josta syötetään mökkien tietoja tietokantaan
         Button mokkiTiedonSyottoBt = new Button("Lisää uusi mökki");
         mokkiTiedonSyottoBt.setOnAction(e -> {
             Stage stage = new Stage();
             stage.setTitle("Lisää uusi mökki");
-
-            /* HUOMIO TÄSSÄ, postinro ja alue on viittauksia niihin toisiin tauluihin (refer to ER-kaavio) niiiin en tiedä oikein
-            et mitä tähän. Pitäiskö se olla sit silleen, että alueen syöttö kohta johonkin ja sitä kautta tähän textfieldin
-            tilalle dropdown menu josta valitaan se alue ja se asettaa postinumeron sit sen mukaan automaattisesti ???*/
             VBox mtsPaneeli = new VBox();
             mtsPaneeli.setSpacing(5);
 
             Label postiNroLbl = new Label("Postinumero");
             TextField postiNroTf = new TextField();
-
             Label toimiPaikkaLbl = new Label("Toimipaikka");
             TextField toimiPaikkaTf = new TextField();
 
+            // Button, joka ajaa metodin, joka tallentaa ylläolevien kenttien inputit posti-tauluun
             Button tallennaPostiBt = new Button("Tallenna tiedot");
             tallennaPostiBt.setOnAction(p -> {
                 String postiNro = postiNroTf.getText();
@@ -351,32 +351,25 @@ public class VJ extends Application{
 
             Label nimiLbl = new Label("Mökin nimi:");
             TextField nimiTf = new TextField();
-
             Label alueLbl = new Label("Alue:");
             ComboBox<String> alueCB = new ComboBox<>();
             alueCB.setItems(haeAlueetTietokannasta());
-
             Label valitsePostiNroLbl = new Label("Valitse postinumero:");
             ComboBox<String> postiNroCB = new ComboBox<>();
             postiNroCB.setItems(haePostiNroTietokannasta());
-
             Label osoiteLbl = new Label("Osoite:");
             TextField osoiteTf = new TextField();
-
             Label hintaLbl = new Label("Hinta:");
             TextField hintaTf = new TextField();
-
             Label kuvausLbl = new Label("Mökin kuvaus:");
             TextArea kuvausTa = new TextArea();
-
             Label henkiloLbl = new Label("Henkilömäärä:");
             TextField henkiloTf = new TextField();
-
             Label varusteluLbl = new Label("Varustelu:");
             TextField varusteluTf = new TextField();
 
+            // Button, joka tallentaa ylläolevien kenttien inputit mokki-tauluun
             Button tallennaMokkiBt = new Button("Tallenna tiedot");
-
             tallennaMokkiBt.setOnAction(p -> {
                 String alueNimi = alueCB.getValue();
                 int alueId = haeAlueId(alueNimi);
@@ -410,8 +403,9 @@ public class VJ extends Application{
 
             Label alueNimiLbl = new Label("Alueen nimi:");
             TextField alueNimiTf = new TextField();
-            Button tallennaAlueBt = new Button("Tallenna tiedot");
 
+            // Nappi, joka ajaa metodin, jolla ylläolevien kenttien tiedot tallennetaan alue-tauluun
+            Button tallennaAlueBt = new Button("Tallenna tiedot");
             tallennaAlueBt.setOnAction(p -> {
                 String alueNimi = alueNimiTf.getText();
                 kirjoitaAlueTietokantaan(alueNimi);
@@ -427,30 +421,26 @@ public class VJ extends Application{
 
         ylaPaneeli.getChildren().addAll(hakuKentta, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt, mokkiTiedonSyottoBt, alueTiedonSyottoBt);
 
-        /*MAKEN NOTE! Koodi ei aja, jos alla oleva rivi käytössä? Mikä mahtaa olla syynä? Tämän takia laitoin sen kommentteihin.
-        Pitää ehkä luoda oma paneeli taulukoille? Ja yhdistää kaksi paneelia root-paneen. Näin tein omassa javaharkkatyössä ja toimi.
-         */
-        //ylaPaneeli.getChildren().addAll(hakuKentta, mokkiTiedonSyottoBt, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt);
 
         //-----------------------------LASKUTAB-------------------------------------
         Tab laskuTab = new Tab("Laskut");
         BorderPane laskuTabPaneeli = new BorderPane();
         laskuTab.setContent(laskuTabPaneeli);
 
+        // Nappi, joka avaa ikkunan, josta syötetään tietoja asiakas-tauluun
         Button asiakasTiedonSyottoBt = new Button("Syötä asiakastietoja");
         asiakasTiedonSyottoBt.setOnAction(e -> {
             Stage stage = new Stage();
             stage.setTitle("Syötä asiakastiedot");
-            //postinumero nyt alustavasti vain noin, katsotaan yhdessä miten se sisällytetään tähän
             VBox atsPaneeli = new VBox();
             atsPaneeli.setSpacing(5);
 
             Label postiNroLbl = new Label("Postinumero");
             TextField postiNroTf = new TextField();
-
             Label toimiPaikkaLbl = new Label("Toimipaikka");
             TextField toimiPaikkaTf = new TextField();
 
+            // Nappi, joka ajaa metodin, jolla ylläolevien kenttien inputit tallennetaan posti-tauluun
             Button tallennaPostiBt = new Button("Tallenna tiedot");
             tallennaPostiBt.setOnAction(p -> {
                 String postiNro = postiNroTf.getText();
@@ -467,13 +457,13 @@ public class VJ extends Application{
             Label valitsePostiNroLbl = new Label("Valitse postinumero:");
             ComboBox<String> postiNroCB = new ComboBox<>();
             postiNroCB.setItems(haePostiNroTietokannasta());
-
             Label emailLbl = new Label("Sähköposti:");
             TextField emailTf = new TextField();
             Label puhelinnroLbl = new Label("Puhelinnumero:");
             TextField puhelinnroTf = new TextField();
-            Button tallennaAsiakasBt = new Button("Tallenna tiedot");
 
+            // Nappi, joka tallentaa ylläolevien kenttien inputit asiakas-tauluun
+            Button tallennaAsiakasBt = new Button("Tallenna tiedot");
             tallennaAsiakasBt.setOnAction(p -> {
                 String postiNro = postiNroCB.getValue();
                 String etuNimi = etuNimiTf.getText();
@@ -491,7 +481,7 @@ public class VJ extends Application{
                     asiakasOsoiteTf, valitsePostiNroLbl, postiNroCB, emailLbl, emailTf,
                     puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
 
-            Scene scene = new Scene(atsPaneeli, 400, 400);
+            Scene scene = new Scene(atsPaneeli, 400, 500);
             stage.setScene(scene);
             stage.show();
         });
