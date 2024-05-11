@@ -1,6 +1,9 @@
 package org.example.ohtkoodia;
+
+import java.io.Serializable;
+
 //Tarvittava luokka, jotta taulukot toimivat
-public class Varaukset {
+public class Varaukset implements Serializable {
     protected int varausID;
     protected String lahetysStat;
     protected String maksuStat;
@@ -33,6 +36,14 @@ public class Varaukset {
 
     public void setMaksuStat(String maksuStat) {
         this.maksuStat = maksuStat;
+    }
+
+    public static void TallennaLasku (int varausID, String lahetysStat, String maksuStat){
+        Varaukset uusiVaraus = new Varaukset(varausID,lahetysStat, maksuStat);
+        VJ.laskudata.add(uusiVaraus);
+        VJ.laskulistaObservable.add(uusiVaraus);
+        LaskutListanHallinta.TallennaLaskuTiedostoon(VJ.laskudata);
+
     }
 
 }
