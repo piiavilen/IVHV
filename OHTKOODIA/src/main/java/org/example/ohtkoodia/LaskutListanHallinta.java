@@ -1,8 +1,6 @@
 package org.example.ohtkoodia;
 
 
-import javafx.collections.ObservableList;
-
 import java.io.*;
 import java.util.List;
 
@@ -10,7 +8,7 @@ public class LaskutListanHallinta implements Serializable {
     private static final String LASKUTIEDOSTO = "Laskutiedosto.txt";
 
 
-    public static void TallennaLaskuTiedostoon (List<Varaukset> laskudata){
+    public static void TallennaLaskuTiedostoon (List<Laskut> laskudata){
         try {
             FileOutputStream fos = new FileOutputStream(LASKUTIEDOSTO);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -23,13 +21,13 @@ public class LaskutListanHallinta implements Serializable {
         }
     }
 
-    protected static List<Varaukset> LueLaskuTiedostosta(){
-        List<Varaukset> laskudata = null;
+    protected static List<Laskut> LueLaskuTiedostosta(){
+        List<Laskut> laskudata = null;
         try {
             FileInputStream fis = new FileInputStream(LASKUTIEDOSTO);
             ObjectInputStream ois = new ObjectInputStream(fis);
 
-            laskudata = (List<Varaukset>) ois.readObject();
+            laskudata = (List<Laskut>) ois.readObject();
             ois.close();
         }
         catch (EOFException e){

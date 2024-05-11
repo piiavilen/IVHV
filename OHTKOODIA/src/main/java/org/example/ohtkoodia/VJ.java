@@ -21,8 +21,7 @@ public class VJ extends Application{
 
     /*Luodaan listat, joita tarvitaan, jotta taulukko toimii*/
 
-    protected static List<Varaukset> laskudata;
-    protected static ObservableList<Varaukset> laskulistaObservable;
+    protected static List<Laskut> laskudata;
 
     //----------------------------METODIT------------------------------------------------------------------------------
 
@@ -186,6 +185,31 @@ public class VJ extends Application{
 
     }
 
+    public ObservableList<Laskut> haeLaskutTietokannasta() {
+        ObservableList<Laskut> laskuTiedot = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM lasku";
+            try (Statement statement = connection.createStatement()) {
+                ResultSet resultSet1 = statement.executeQuery(query);
+                while (resultSet1.next()) {
+                    Laskut lasku = new Laskut(resultSet1.getInt("lasku_id"),
+                            resultSet1.getInt("varaus_id"),
+                            resultSet1.getDouble("summa"),
+                            resultSet1.getDouble("alv"),
+                            resultSet1.getInt("maksettu"));
+                    laskuTiedot.add(lasku);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return laskuTiedot;
+
+    }
 
 
     //--------------------------------------UI-------------------------------------------------------------------------
@@ -408,51 +432,38 @@ public class VJ extends Application{
         });
 
         //----------------------------------------------------------TABLEVIEW-----------------------------------------
+
         // Luo TableView
-        TableView laskuTableView = new TableView<Varaukset>();
+        TableView laskuTableView = new TableView<Laskut>();
+        // Luo ObservableList
+        ObservableList<Laskut> lasku = FXCollections.observableArrayList();
 
         // Luo sarakkeet
-        TableColumn IdVARAUSColumn = new TableColumn<Varaukset, Integer>("Varaus ID");
-        IdVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Varaukset, Integer>("varausID"));
-        IdVARAUSColumn.setCellFactory(column -> new TableCell<Varaukset, Integer>() {
-                    @Override
-                    protected void updateItem(Integer varausid, boolean tyhja) {
-                        super.updateItem(varausid, tyhja);
-                        if (tyhja || varausid == null) {
-                            setText(null);
-                        } else {
-                            setText(varausid.toString());
-                        }
-                    }
-                }
-        );
+        TableColumn IdLASKUColumn = new TableColumn<Laskut, Integer>("Lasku ID");
+        IdLASKUColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("varausID"));
 
-        TableColumn lahetysVARAUSColumn = new TableColumn<Varaukset, String>("Onko lasku lähetetty?");
-        lahetysVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Varaukset, String>("lahetysStat"));
+        TableColumn IdVARAUSColumn = new TableColumn<Laskut, Integer>("Varaus ID");
+        IdVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("varausID"));
 
-        TableColumn maksuVARAUSColumn = new TableColumn<Varaukset, String>("Onko maksettu?");
-        maksuVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Varaukset, String>("maksuStat"));
+        TableColumn SummaColumn = new TableColumn<Laskut, Integer>("Summa");
+        SummaColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("summa"));
+
+        TableColumn alvColumn = new TableColumn<Laskut, Integer>("ALV");
+        alvColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("alv"));
+
+        TableColumn maksettuColumn = new TableColumn<Laskut, Integer>("Onko maksettu?");
+        maksettuColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("maksettu"));
 
         //------------------------------------------------------
         laskuTabPaneeli.setTop(asiakasTiedonSyottoBt);
-        laskuTableView.getColumns().addAll(IdVARAUSColumn, lahetysVARAUSColumn, maksuVARAUSColumn);
 
-        laskudata = LaskutListanHallinta.LueLaskuTiedostosta();
-        if (laskudata == null){
-            laskudata = new ArrayList<>();
-        }
-        ObservableList<Varaukset> varausdata = FXCollections.observableArrayList();
-        laskuTableView.setItems(varausdata);
-        laskulistaObservable = FXCollections.observableArrayList();
-        laskuTableView.setItems(laskulistaObservable);
-        laskuTableView.setEditable(true);
-
-        if (!(LaskutListanHallinta.LueLaskuTiedostosta() == null )){
-            laskuTableView.getItems().addAll(laskudata);
-        }
+        laskuTableView.getColumns().addAll(IdLASKUColumn, IdVARAUSColumn, SummaColumn, alvColumn, maksettuColumn);
+        lasku.addAll(haeLaskutTietokannasta());
+        laskuTableView.setItems(lasku);
 
         // Lisää taulukko BorderPaneen
         laskuTabPaneeli.setCenter(laskuTableView);
+        ;
 
 
 
