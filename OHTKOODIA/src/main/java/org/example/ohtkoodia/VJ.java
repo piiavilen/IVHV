@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -15,6 +16,8 @@ import java.sql.*;
 
 
 public class VJ extends Application{
+
+    // private Haku haku = new Haku(); // Luo uusi Haku-olio
 
     //----------------------------METODIT------------------------------------------------------------------------------
 
@@ -146,7 +149,7 @@ public class VJ extends Application{
                 int affectedRows = preparedStatement.executeUpdate();
 
                 if (affectedRows > 0) {
-                    System.out.println("Tiedot tallennetuivat");
+                    System.out.println("Tiedot tallentuivat");
                 } else {
                     System.out.println("Jokin meni pieleen");
                 }
@@ -277,6 +280,8 @@ public class VJ extends Application{
         Slider hintaSlider = new Slider(0, 100, 50);
         Label hintaArvoLbl = new Label(hintaSlider.getValue() + "€");
 
+
+
         hintaSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             hintaArvoLbl.setText(String.format("%.2f €", newValue.doubleValue()));
         }));
@@ -327,6 +332,15 @@ public class VJ extends Application{
 
         // Lisää taulukko BorderPaneen
         mokkiTabPaneeli.setCenter(mokkiTableView);
+
+        /* Lisää hakutoiminnallisuus haku-painikkeelle
+        hakuBt.setOnAction(e -> {
+            String hakusana = hakuKentta.getText(); // Hae hakusana tekstikentästä
+            ObservableList<Mokki> hakutulokset = haku.haeMokitTietokannasta(hakusana); // Hae mökit hakusanan perusteella
+            mokkiTableView.setItems(hakutulokset); // Päivitä TableView hakutuloksilla
+        });
+
+        HBox.setHgrow(hakuKentta, Priority.ALWAYS);*/
 
         // Button, joka avaa ikkunan, josta syötetään mökkien tietoja tietokantaan
         Button mokkiTiedonSyottoBt = new Button("Lisää uusi mökki");

@@ -10,8 +10,8 @@ public class Haku {
     public ObservableList<Mokki> haeMokitTietokannasta(String hakusana) {
         ObservableList<Mokki> mokkiTiedot = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn"; // Tietokannan URL
-        String username = "root"; // Tietokannan käyttäjänimi
-        String password = ""; // Tietokannan salasana
+        String username = "pmauser"; // Tietokannan käyttäjänimi
+        String password = "password"; // Tietokannan salasana
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) { // Yritetään luoda yhteys tietokantaan
             // SQL-kysely mökkien hakemiseksi annetun hakusanan perusteella
