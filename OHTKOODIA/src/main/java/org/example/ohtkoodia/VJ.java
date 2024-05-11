@@ -11,17 +11,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.io.FileNotFoundException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class VJ extends Application{
-
-    /*Luodaan listat, joita tarvitaan, jotta taulukko toimii*/
-
-    protected static List<Laskut> laskudata;
 
     //----------------------------METODIT------------------------------------------------------------------------------
 
@@ -182,7 +175,50 @@ public class VJ extends Application{
             System.out.println(e.getMessage());
         }
         return mokkiTiedot;
+    }
 
+    public void kirjoitaPostiNroTietokantaan(String postiNro, String toimiPaikka) {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "INSERT INTO posti (postinro, toimipaikka) VALUES (?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, postiNro);
+                preparedStatement.setString(2, toimiPaikka);
+                int affectedRows = preparedStatement.executeUpdate();
+
+                if (affectedRows > 0) {
+                    System.out.println("Tiedot tallennetuivat");
+                } else {
+                    System.out.println("Jokin meni pieleen");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public ObservableList<String> haePostiNroTietokannasta() {
+        ObservableList<String> postiNumerot = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT postinro FROM posti";
+            try (Statement statement = connection.createStatement()) {
+                ResultSet resultSet = statement.executeQuery(query);
+                while (resultSet.next()) {
+                    String postiNro = resultSet.getString("postinro");
+                    postiNumerot.add(postiNro);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return postiNumerot;
     }
 
     public ObservableList<Laskut> haeLaskutTietokannasta() {
@@ -221,13 +257,13 @@ public class VJ extends Application{
         TabPane tabit = new TabPane();
 
         //-----------------------------VARAUSTAB-------------------------------------
-        Tab varausTab = new Tab("Varaukset");
-        BorderPane varausTabPaneeli = new BorderPane();
-        varausTab.setContent(varausTabPaneeli);
+        Tab mokkiTab = new Tab("Mökit");
+        BorderPane mokkiTabPaneeli = new BorderPane();
+        mokkiTab.setContent(mokkiTabPaneeli);
         //Make kysyy: Mille tämä on paneeli? voisi nopean kommentin lisätä ken luonut
         //Aliisa vastaa: Tämä paneeli on sitä varten, että voi lisätä ne suodatinelementit kaikki kätevästi peräjälkeen tohon ylös
         HBox ylaPaneeli = new HBox();
-        varausTabPaneeli.setTop(ylaPaneeli);
+        mokkiTabPaneeli.setTop(ylaPaneeli);
         TextField hakuKentta = new TextField();
         hakuKentta.setPromptText("Mökin nimi");
         Button hakuBt = new Button("Hae");
@@ -241,8 +277,6 @@ public class VJ extends Application{
         }));
 
         //-----------------------------MÖKKITAULUKKO-------------------------------------
-
-
         // Luo TableView
         TableView<Mokki> mokkiTableView = new TableView<>();
         // Luo ObservableList
@@ -254,13 +288,13 @@ public class VJ extends Application{
         TableColumn<Mokki, String> osoiteMOKKIColumn = new TableColumn<>("osoite");
         osoiteMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("osoite"));
 
-        TableColumn<Mokki, Integer> postinroMOKKIColumn = new TableColumn<>("Postinumero");
+        TableColumn<Mokki, String> postinroMOKKIColumn = new TableColumn<>("Postinumero");
         postinroMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("postinro"));
 
         TableColumn<Mokki, Double> hintaMOKKIColumn = new TableColumn<>("Hinta");
         hintaMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("hinta"));
 
-        TableColumn<Mokki, Double> kuvausMOKKIColumn = new TableColumn<>("Kuvaus");
+        TableColumn<Mokki, String> kuvausMOKKIColumn = new TableColumn<>("Kuvaus");
         kuvausMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("kuvaus"));
 
         TableColumn<Mokki, Integer> hlomaaraMOKKIColumn = new TableColumn<>("Henkilömäärä");
@@ -286,9 +320,8 @@ public class VJ extends Application{
         mokkiTableView.getColumns().addAll(nimiMOKKIColumn, osoiteMOKKIColumn, postinroMOKKIColumn, hintaMOKKIColumn,
                 kuvausMOKKIColumn, hlomaaraMOKKIColumn, varusteluMOKKIColumn);//Muistetaan lisätä varausbtn
 
-
         // Lisää taulukko BorderPaneen
-        varausTabPaneeli.setCenter(mokkiTableView);
+        mokkiTabPaneeli.setCenter(mokkiTableView);
 
         // TÄSSÄ HUOMIO, muissa kentissä on täällä textfield mutta kuvaukseen käytetään TextArea oliota
         // Alustavasti mahdollista syöttää pelkkiä mökkejä, koitetaan saada ensin tämä toimimaan ja sitten vasta palvelut
@@ -303,6 +336,19 @@ public class VJ extends Application{
             VBox mtsPaneeli = new VBox();
             mtsPaneeli.setSpacing(5);
 
+            Label postiNroLbl = new Label("Postinumero");
+            TextField postiNroTf = new TextField();
+
+            Label toimiPaikkaLbl = new Label("Toimipaikka");
+            TextField toimiPaikkaTf = new TextField();
+
+            Button tallennaPostiBt = new Button("Tallenna tiedot");
+            tallennaPostiBt.setOnAction(p -> {
+                String postiNro = postiNroTf.getText();
+                String toimiPaikka = toimiPaikkaTf.getText();
+                kirjoitaPostiNroTietokantaan(postiNro, toimiPaikka);
+            });
+
             Label nimiLbl = new Label("Mökin nimi:");
             TextField nimiTf = new TextField();
 
@@ -310,11 +356,12 @@ public class VJ extends Application{
             ComboBox<String> alueCB = new ComboBox<>();
             alueCB.setItems(haeAlueetTietokannasta());
 
+            Label valitsePostiNroLbl = new Label("Valitse postinumero:");
+            ComboBox<String> postiNroCB = new ComboBox<>();
+            postiNroCB.setItems(haePostiNroTietokannasta());
+
             Label osoiteLbl = new Label("Osoite:");
             TextField osoiteTf = new TextField();
-
-            Label postiNroLbl = new Label("Postinumero");
-            TextField postiNroTf = new TextField();
 
             Label hintaLbl = new Label("Hinta:");
             TextField hintaTf = new TextField();
@@ -333,7 +380,8 @@ public class VJ extends Application{
             tallennaMokkiBt.setOnAction(p -> {
                 String alueNimi = alueCB.getValue();
                 int alueId = haeAlueId(alueNimi);
-                String postiNro = postiNroTf.getText();
+                String postiNro = postiNroCB.getValue();
+                String toimiPaikka = toimiPaikkaTf.getText();
                 String mokkinimi = nimiTf.getText();
                 String katuosoite = osoiteTf.getText();
                 double hinta = Double.parseDouble(hintaTf.getText());
@@ -343,11 +391,11 @@ public class VJ extends Application{
                 kirjoitaMokkiTietokantaan(alueId, postiNro, mokkinimi, katuosoite, hinta, kuvaus, henkilo, varustelu);
             });
 
-            mtsPaneeli.getChildren().addAll(nimiLbl, nimiTf, alueLbl, alueCB, osoiteLbl, osoiteTf, postiNroLbl, postiNroTf,
-                    hintaLbl, hintaTf, kuvausLbl, kuvausTa, henkiloLbl, henkiloTf, varusteluLbl, varusteluTf,
-                    tallennaMokkiBt);
+            mtsPaneeli.getChildren().addAll(postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf, tallennaPostiBt,
+                    nimiLbl, nimiTf, alueLbl, alueCB, valitsePostiNroLbl, postiNroCB, osoiteLbl, osoiteTf, hintaLbl,
+                    hintaTf, kuvausLbl, kuvausTa, henkiloLbl, henkiloTf, varusteluLbl, varusteluTf, tallennaMokkiBt);
 
-            Scene scene = new Scene(mtsPaneeli, 400, 500);
+            Scene scene = new Scene(mtsPaneeli, 400, 600);
             stage.setScene(scene);
             stage.show();
         });
@@ -374,7 +422,7 @@ public class VJ extends Application{
             Scene scene = new Scene(atsPaneeli, 400, 400);
             stage.setScene(scene);
             stage.show();
-                });
+        });
 
 
         ylaPaneeli.getChildren().addAll(hakuKentta, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt, mokkiTiedonSyottoBt, alueTiedonSyottoBt);
@@ -396,14 +444,30 @@ public class VJ extends Application{
             //postinumero nyt alustavasti vain noin, katsotaan yhdessä miten se sisällytetään tähän
             VBox atsPaneeli = new VBox();
             atsPaneeli.setSpacing(5);
+
+            Label postiNroLbl = new Label("Postinumero");
+            TextField postiNroTf = new TextField();
+
+            Label toimiPaikkaLbl = new Label("Toimipaikka");
+            TextField toimiPaikkaTf = new TextField();
+
+            Button tallennaPostiBt = new Button("Tallenna tiedot");
+            tallennaPostiBt.setOnAction(p -> {
+                String postiNro = postiNroTf.getText();
+                String toimiPaikka = toimiPaikkaTf.getText();
+                kirjoitaPostiNroTietokantaan(postiNro, toimiPaikka);
+            });
+
             Label etuNimiLbl = new Label("Etunimi:");
             TextField etuNimiTf = new TextField();
             Label sukuNimiLbl = new Label("Sukunimi:");
             TextField sukuNimiTf = new TextField();
             Label asiaksOsoiteLbl = new Label("Osoite:");
             TextField asiakasOsoiteTf = new TextField();
-            Label postiNroLbl = new Label("Postinumero:");
-            TextField postiNroTF = new TextField();
+            Label valitsePostiNroLbl = new Label("Valitse postinumero:");
+            ComboBox<String> postiNroCB = new ComboBox<>();
+            postiNroCB.setItems(haePostiNroTietokannasta());
+
             Label emailLbl = new Label("Sähköposti:");
             TextField emailTf = new TextField();
             Label puhelinnroLbl = new Label("Puhelinnumero:");
@@ -411,7 +475,7 @@ public class VJ extends Application{
             Button tallennaAsiakasBt = new Button("Tallenna tiedot");
 
             tallennaAsiakasBt.setOnAction(p -> {
-                String postiNro = postiNroTF.getText();
+                String postiNro = postiNroCB.getValue();
                 String etuNimi = etuNimiTf.getText();
                 String sukuNimi = sukuNimiTf.getText();
                 String lahiOsoite = asiakasOsoiteTf.getText();
@@ -420,11 +484,12 @@ public class VJ extends Application{
 
                 kirjoitaAsiakasTietokantaan(postiNro, etuNimi, sukuNimi, lahiOsoite, email, puhelinNro);
 
-
             });
 
-            atsPaneeli.getChildren().addAll(etuNimiLbl, etuNimiTf, sukuNimiLbl, sukuNimiTf, asiaksOsoiteLbl,
-                    asiakasOsoiteTf, postiNroLbl, postiNroTF, emailLbl, emailTf, puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
+            atsPaneeli.getChildren().addAll(postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf, tallennaPostiBt,
+                    etuNimiLbl, etuNimiTf, sukuNimiLbl, sukuNimiTf, asiaksOsoiteLbl,
+                    asiakasOsoiteTf, valitsePostiNroLbl, postiNroCB, emailLbl, emailTf,
+                    puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
 
             Scene scene = new Scene(atsPaneeli, 400, 400);
             stage.setScene(scene);
@@ -432,7 +497,6 @@ public class VJ extends Application{
         });
 
         //----------------------------------------------------------TABLEVIEW-----------------------------------------
-
         // Luo TableView
         TableView laskuTableView = new TableView<Laskut>();
         // Luo ObservableList
@@ -463,13 +527,10 @@ public class VJ extends Application{
 
         // Lisää taulukko BorderPaneen
         laskuTabPaneeli.setCenter(laskuTableView);
-        ;
-
-
 
         //------------------------------------------------------------------------------------------------------------
 
-        tabit.getTabs().addAll(varausTab, laskuTab);
+        tabit.getTabs().addAll(mokkiTab, laskuTab);
         paneeli.setCenter(tabit);
 
         Scene scene = new Scene(paneeli, 800, 600);
@@ -478,7 +539,7 @@ public class VJ extends Application{
         primaryStage.show();
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) {
         Application.launch(args);
     }
 }
