@@ -1,6 +1,8 @@
 package org.example.ohtkoodia;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -9,10 +11,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.FileNotFoundException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class VJ extends Application{
+
+    /*Luodaan listat, joita tarvitaan, jotta taulukko toimii*/
+
+    protected static List<Varaukset> laskudata;
+    protected static ObservableList<Varaukset> laskulistaObservable;
 
     //Metodi, jolla syötetään mökin tiedot tietokantaan, EI TOIMI VIELÄ KOSKA ALUE_ID:LLÄ EI OLE ARVOA
     /*update t.make: ei toimi, koska kysely huutaa rajoitteiden epäonnistumisesta. Googlauksella ongelma olisi, ettei alue_ID:eeseen'
@@ -87,6 +97,8 @@ public class VJ extends Application{
         }));
 
         //-----------------------------MÖKKITAULUKKO-------------------------------------
+
+
         // Luo TableView
         TableView<Mokki> mokkiTableView = new TableView<>();
 
@@ -95,13 +107,13 @@ public class VJ extends Application{
         nimiMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("nimi"));
 
         TableColumn<Mokki, Integer> postinroMOKKIColumn = new TableColumn<>("Postinumero");
-        postinroMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("postinumero"));
+        postinroMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("postinro"));
 
         TableColumn<Mokki, Double> hintaMOKKIColumn = new TableColumn<>("Hinta");
         hintaMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("hinta"));
 
         TableColumn<Mokki, Integer> hlomaaraMOKKIColumn = new TableColumn<>("Henkilömäärä");
-        hlomaaraMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("henkilomaara"));
+        hlomaaraMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("hlomaara"));
 
         TableColumn<Mokki, String> varusteluMOKKIColumn = new TableColumn<>("Varustelu");
         varusteluMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("varustelu"));
@@ -117,6 +129,7 @@ public class VJ extends Application{
 
         // Lisää sarakkeet taulukkoon
         mokkiTableView.getColumns().addAll(nimiMOKKIColumn, postinroMOKKIColumn, hintaMOKKIColumn, hlomaaraMOKKIColumn, varusteluMOKKIColumn);//Muistetaan lisätä varausbtn
+
 
         // Lisää taulukko BorderPaneen
         varausTabPaneeli.setCenter(mokkiTableView);
@@ -221,24 +234,60 @@ public class VJ extends Application{
             stage.show();
         });
         //----------------------------------------------------------TABLEVIEW-----------------------------------------
+        /**
+         * Listan luonti. Maaritellaan listan kayttavan LueLaskuTiedostosta-metodia.
+         * Taman jalkeen jos laskudata-lista on tyhja, luodaan uusi ArrayList-lista
+         * */
+
+
+
         // Luo TableView
-        TableView<Varaukset> laskuTableView = new TableView<>();
+        TableView laskuTableView = new TableView<Varaukset>();
 
         // Luo sarakkeet
-        TableColumn<Varaukset, Integer> IdVARAUSColumn = new TableColumn<>("Varaus ID");
-        IdVARAUSColumn.setCellValueFactory(new PropertyValueFactory<>("varausID"));
+        TableColumn IdVARAUSColumn = new TableColumn<Varaukset, Integer>("Varaus ID");
+        IdVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Varaukset, Integer>("varausID"));
+        IdVARAUSColumn.setCellFactory(column -> new TableCell<Varaukset, Integer>() {
+                    @Override
+                    protected void updateItem(Integer varausid, boolean tyhja) {
+                        super.updateItem(varausid, tyhja);
+                        if (tyhja || varausid == null) {
+                            setText(null);
+                        } else {
+                            setText(varausid.toString());
+                        }
+                    }
+                }
+        );
 
-        TableColumn<Varaukset, String> lahetysVARAUSColumn = new TableColumn<>("Onko lasku lähetetty?");
-        lahetysVARAUSColumn.setCellValueFactory(new PropertyValueFactory<>("lahetysStat"));
+        TableColumn lahetysVARAUSColumn = new TableColumn<Varaukset, String>("Onko lasku lähetetty?");
+        lahetysVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Varaukset, String>("lahetysStat"));
 
-        TableColumn<Varaukset, String> maksuVARAUSColumn = new TableColumn<>("Onko maksettu?");
-        maksuVARAUSColumn.setCellValueFactory(new PropertyValueFactory<>("maksuStat"));
+        TableColumn maksuVARAUSColumn = new TableColumn<Varaukset, String>("Onko maksettu?");
+        maksuVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Varaukset, String>("maksuStat"));
 
+        //------------------------------------------------------
         laskuTabPaneeli.setTop(asiakasTiedonSyottoBt);
         laskuTableView.getColumns().addAll(IdVARAUSColumn, lahetysVARAUSColumn, maksuVARAUSColumn);
 
+        laskudata = LaskutListanHallinta.LueLaskuTiedostosta();
+        if (laskudata == null){
+            laskudata = new ArrayList<>();
+        }
+        ObservableList<Varaukset> varausdata = FXCollections.observableArrayList();
+        laskuTableView.setItems(varausdata);
+        laskulistaObservable = FXCollections.observableArrayList();
+        laskuTableView.setItems(laskulistaObservable);
+        laskuTableView.setEditable(true);
+
+        if (!(LaskutListanHallinta.LueLaskuTiedostosta() == null )){
+            laskuTableView.getItems().addAll(laskudata);
+        }
+
         // Lisää taulukko BorderPaneen
         laskuTabPaneeli.setCenter(laskuTableView);
+
+
 
         //------------------------------------------------------------------------------------------------------------
 
@@ -252,7 +301,7 @@ public class VJ extends Application{
         primaryStage.show();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         Application.launch(args);
     }
 }
