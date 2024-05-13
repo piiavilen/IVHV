@@ -188,8 +188,76 @@ public class VJ extends Application{
         return postiNumerot;
     }
 
+    //------VARAUKSET
+
+    // Metodi, joka kirjoittaa varauksen tietokantaan
+    public void kirjoitaVarausTietokantaan(Varaus varaus) {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "INSERT INTO varaus (asiakas_id, mokki_id, varattu_pvm, vahvistus_pvm, varattu_alkupvm, varattu_loppupvm) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, varaus.getAsiakasId());
+                preparedStatement.setInt(2, varaus.getMokkiId());
+                preparedStatement.setDate(3, varaus.getVarattuPvm());
+                preparedStatement.setDate(4, varaus.getVahvistusPvm());
+                preparedStatement.setDate(5, varaus.getVarattuAlkupvm());
+                preparedStatement.setDate(6, varaus.getVarattuLoppupvm());
+
+                int affectedRows = preparedStatement.executeUpdate();
+
+                if (affectedRows > 0) {
+                    System.out.println("Varaus tallennettu");
+                } else {
+                    System.out.println("Jokin meni pieleen");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    // Metodi, joka palauttaa tietokannasta kaikki varaukset sisältävän listan
+    public ObservableList<Varaus> haeVarauksetTietokannasta(int mokkiId) {
+        ObservableList<Varaus> varaukset = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM varaus WHERE mokki_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, mokkiId);
+                ResultSet resultSet = preparedStatement.executeQuery();
+                while (resultSet.next()) {
+                    int varausId = resultSet.getInt("varaus_id");
+                    int asiakasId = resultSet.getInt("asiakas_id");
+                    Date varattuPvm = resultSet.getDate("varattu_pvm");
+                    Date vahvistusPvm = resultSet.getDate("vahvistus_pvm");
+                    Date varattuAlkupvm = resultSet.getDate("varattu_alkupvm");
+                    Date varattuLoppupvm = resultSet.getDate("varattu_loppupvm");
+
+                    Varaus varaus = new Varaus(varausId, asiakasId, mokkiId, varattuPvm, vahvistusPvm, varattuAlkupvm, varattuLoppupvm);
+                    varaukset.add(varaus);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return varaukset;
+    }
+
+
+
     //--------------------------------------UI-------------------------------------------------------------------------
     public void start(Stage primaryStage) throws Exception {
+
+        // muuttuja mökkitietojen hakemiseen varaustabia varten
+        ObservableList<Mokki> mokkiData = Mokki.haeMokitTietokannasta();
+
 
         BorderPane paneeli = new BorderPane();
         TabPane tabit = new TabPane();
@@ -244,6 +312,52 @@ public class VJ extends Application{
 
         TableColumn<Mokki, String> varusteluMOKKIColumn = new TableColumn<>("Varustelu");
         varusteluMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("varustelu"));
+
+
+
+        TableColumn<Mokki, String> varausMOKKIColumn = new TableColumn<>("Varaus");
+        varausMOKKIColumn.setCellFactory(column -> {
+            return new TableCell<Mokki, String>() {
+                final Button teeVarausbtn = new Button("Tee varaus");
+
+                {
+                    teeVarausbtn.setOnAction(event -> {
+                        Mokki selectedMokki = getTableView().getItems().get(getIndex());
+
+                        // Palauttaa valitun mökin varaukset
+                        ObservableList<Varaus> varaukset = haeVarauksetTietokannasta(selectedMokki.getMokkiId());
+
+                        // Näytä varauksista ListView
+                        ListView<Varaus> varauksetListView = new ListView<>();
+                        varauksetListView.setItems(varaukset);
+
+                        VBox root = new VBox();
+                        root.getChildren().addAll(varauksetListView);
+
+                        Stage reservationStage = new Stage();
+                        Scene scene = new Scene(root);
+                        reservationStage.setScene(scene);
+                        reservationStage.show();
+                    });
+                }
+
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(teeVarausbtn);
+                    }
+                }
+            };
+        });
+
+
+
+
+
+
         // Lisää mökit ObservableListiin
         mokki.addAll(Mokki.haeMokitTietokannasta());
         // Aseta Observablelistin sisältö TableViewiin
@@ -266,7 +380,7 @@ public class VJ extends Application{
 
         // Lisää sarakkeet taulukkoon
         mokkiTableView.getColumns().addAll(nimiMOKKIColumn, osoiteMOKKIColumn, postinroMOKKIColumn, hintaMOKKIColumn,
-                kuvausMOKKIColumn, hlomaaraMOKKIColumn, varusteluMOKKIColumn);//Muistetaan lisätä varausbtn
+                kuvausMOKKIColumn, hlomaaraMOKKIColumn, varusteluMOKKIColumn, varausMOKKIColumn);
 
         // Lisää taulukko BorderPaneen
         mokkiTabPaneeli.setCenter(mokkiTableView);
