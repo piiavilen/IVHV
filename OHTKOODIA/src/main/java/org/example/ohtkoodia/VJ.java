@@ -25,38 +25,11 @@ public class VJ extends Application{
     //https://stackoverflow.com/questions/5005388/cannot-add-or-update-a-child-row-a-foreign-key-constraint-fails
     //https://stackoverflow.com/questions/59956372/sql-server-foreign-key-constraint-error-but-data-exists
 
-    // Metodi, joka syöttää mökin tiedot mokki-tauluun
-    public void kirjoitaMokkiTietokantaan(int alue_id, String postiNro, String mokkinimi, String katuosoite, double hinta, String kuvaus,
-                                          int henkilo, String varustelu) {
-        String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
-
-        try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String sql = "INSERT INTO mokki (alue_id, postinro, mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setInt(1, alue_id);
-                preparedStatement.setString(2, postiNro);
-                preparedStatement.setString(3, mokkinimi);
-                preparedStatement.setString(4, katuosoite);
-                preparedStatement.setDouble(5, hinta);
-                preparedStatement.setString(6, kuvaus);
-                preparedStatement.setInt(7, henkilo);
-                preparedStatement.setString(8, varustelu);
 
 
-                int affectedRows = preparedStatement.executeUpdate();
+    //----------------------ALUE-METODIT---------------------------
 
-                if (affectedRows > 0) {
-                    System.out.println("Tiedot tallennetuivat");
-                } else {
-                    System.out.println("Jokin meni pieleen");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
+
 
     // Metodi, joka kirjoittaa alueen tiedot tietokantaan
     public void kirjoitaAlueTietokantaan(String nimi) {
@@ -129,6 +102,10 @@ public class VJ extends Application{
         return alueNimet;
     }
 
+
+    //---------LUOKITTELEMATTOMAT METODIT-------------
+
+
     // Metodi, joka kirjoittaa asiakastiedot tietokantaan
     public void kirjoitaAsiakasTietokantaan(String postiNro, String etuNimi, String sukuNimi, String lahiosoite,
                                             String email, String puhelinNro) {
@@ -159,33 +136,11 @@ public class VJ extends Application{
         }
     }
 
-    // Metodi, joka palauttaa mökkien tiedot sisältävän listan tietokannasta
-    public ObservableList<Mokki> haeMokitTietokannasta() {
-        ObservableList<Mokki> mokkiTiedot = FXCollections.observableArrayList();
-        String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
 
-        try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String query = "SELECT * FROM mokki";
-            try (Statement statement = connection.createStatement()) {
-                ResultSet resultSet = statement.executeQuery(query);
-                while (resultSet.next()) {
-                    Mokki mokki = new Mokki(resultSet.getString("mokkinimi"),
-                            resultSet.getString("katuosoite"),
-                            resultSet.getString("postinro"),
-                            resultSet.getDouble("hinta"),
-                            resultSet.getString("kuvaus"),
-                            resultSet.getInt("henkilomaara"),
-                            resultSet.getString("varustelu"));
-                    mokkiTiedot.add(mokki);
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        return mokkiTiedot;
-    }
+
+    //--------------POSTINUMERO-METODIT---------------------
+
+
 
     // Metodi, joka kirjoittaa postinumeron ja toimipaikan tietokantaan
     public void kirjoitaPostiNroTietokantaan(String postiNro, String toimiPaikka) {
@@ -233,41 +188,13 @@ public class VJ extends Application{
         return postiNumerot;
     }
 
-    // Metodi, joka palauttaa tietokannasta listan kaikista laskuista
-    public ObservableList<Laskut> haeLaskutTietokannasta() {
-        ObservableList<Laskut> laskuTiedot = FXCollections.observableArrayList();
-        String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
-
-        try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String query = "SELECT * FROM lasku";
-            try (Statement statement = connection.createStatement()) {
-                ResultSet resultSet1 = statement.executeQuery(query);
-                while (resultSet1.next()) {
-                    Laskut lasku = new Laskut(resultSet1.getInt("lasku_id"),
-                            resultSet1.getInt("varaus_id"),
-                            resultSet1.getDouble("summa"),
-                            resultSet1.getDouble("alv"),
-                            resultSet1.getInt("maksettu"));
-                    laskuTiedot.add(lasku);
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        return laskuTiedot;
-
-    }
-
-
     //--------------------------------------UI-------------------------------------------------------------------------
     public void start(Stage primaryStage) throws Exception {
 
         BorderPane paneeli = new BorderPane();
         TabPane tabit = new TabPane();
 
-        //-----------------------------VARAUSTAB-------------------------------------
+        //-----------------------------MÖKKITAB-------------------------------------
         Tab mokkiTab = new Tab("Mökit");
         BorderPane mokkiTabPaneeli = new BorderPane();
         mokkiTab.setContent(mokkiTabPaneeli);
@@ -275,7 +202,12 @@ public class VJ extends Application{
         mokkiTabPaneeli.setTop(ylaPaneeli);
         TextField hakuKentta = new TextField();
         hakuKentta.setPromptText("Mökin nimi");
-        Button hakuBt = new Button("Hae");
+
+
+//HAKUPAINIKE SIIRRETTY TABLEVIEW OSIOON TOIMINNALLISUUDEN VUOKSI!!!
+
+
+        //-- Slideri
         Label hintaSliderLbl = new Label("Hinta: ");
         Slider hintaSlider = new Slider(0, 100, 50);
         Label hintaArvoLbl = new Label(hintaSlider.getValue() + "€");
@@ -313,10 +245,16 @@ public class VJ extends Application{
         TableColumn<Mokki, String> varusteluMOKKIColumn = new TableColumn<>("Varustelu");
         varusteluMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("varustelu"));
         // Lisää mökit ObservableListiin
-        mokki.addAll(haeMokitTietokannasta());
+        mokki.addAll(Mokki.haeMokitTietokannasta());
         // Aseta Observablelistin sisältö TableViewiin
         mokkiTableView.setItems(mokki);
 
+        //Haku-painike ja toiminnallisuus
+        Button hakuBt = new Button("Hae");
+        hakuBt.setOnAction(e ->{
+            String hakusana = hakuKentta.getText();
+            mokkiTableView.setItems(Haku.haeMokitTietokannasta(hakusana));
+        });
         //TÄHÄN TULISI VARAUS-PAINIKKEEN LUONTI JA TOIMINNALLISUUS, PALATAAN TÄHÄN MYÖHEMMIN!!!
         /*Marjutilla osa tätä koodia ja sen toiminnallisuutta, katsotaan backend-vaiheessa
         tarkemmin!!
@@ -395,7 +333,7 @@ public class VJ extends Application{
                 String kuvaus = kuvausTa.getText();
                 int henkilo = Integer.parseInt(henkiloTf.getText());
                 String varustelu = varusteluTf.getText();
-                kirjoitaMokkiTietokantaan(alueId, postiNro, mokkinimi, katuosoite, hinta, kuvaus, henkilo, varustelu);
+                Mokki.kirjoitaMokkiTietokantaan(alueId, postiNro, mokkinimi, katuosoite, hinta, kuvaus, henkilo, varustelu);
             });
 
             mtsPaneeli.getChildren().addAll(postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf, tallennaPostiBt,
@@ -526,7 +464,7 @@ public class VJ extends Application{
         laskuTabPaneeli.setTop(asiakasTiedonSyottoBt);
 
         laskuTableView.getColumns().addAll(IdLASKUColumn, IdVARAUSColumn, SummaColumn, alvColumn, maksettuColumn);
-        lasku.addAll(haeLaskutTietokannasta());
+        lasku.addAll(Laskut.haeLaskutTietokannasta());
         laskuTableView.setItems(lasku);
 
         // Lisää taulukko BorderPaneen

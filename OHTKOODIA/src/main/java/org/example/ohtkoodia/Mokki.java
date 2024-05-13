@@ -1,10 +1,74 @@
 package org.example.ohtkoodia;
 
-//Tarvittava luokka, jotta taulukot toimivat
-//Make imported this. Tarvitaan varmaan myöhemmin ObservableListin kanssa. (SQL-tietokantaan yhdistäessä)
-import java.io.Serializable;
 
-public class Mokki implements Serializable {
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import java.sql.*;
+
+public class Mokki extends VJ {
+
+    // Metodi, joka syöttää mökin tiedot mokki-tauluun
+    public static void kirjoitaMokkiTietokantaan(int alue_id, String postiNro, String mokkinimi, String katuosoite, double hinta, String kuvaus,
+                                                 int henkilo, String varustelu) {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "INSERT INTO mokki (alue_id, postinro, mokkinimi, katuosoite, hinta, kuvaus, henkilomaara, varustelu) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, alue_id);
+                preparedStatement.setString(2, postiNro);
+                preparedStatement.setString(3, mokkinimi);
+                preparedStatement.setString(4, katuosoite);
+                preparedStatement.setDouble(5, hinta);
+                preparedStatement.setString(6, kuvaus);
+                preparedStatement.setInt(7, henkilo);
+                preparedStatement.setString(8, varustelu);
+
+
+                int affectedRows = preparedStatement.executeUpdate();
+
+                if (affectedRows > 0) {
+                    System.out.println("Tiedot tallennetuivat");
+                } else {
+                    System.out.println("Jokin meni pieleen");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    // Metodi, joka palauttaa mökkien tiedot sisältävän listan tietokannasta
+    public static ObservableList<Mokki> haeMokitTietokannasta() {
+        ObservableList<Mokki> mokkiTiedot = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM mokki";
+            try (Statement statement = connection.createStatement()) {
+                ResultSet resultSet = statement.executeQuery(query);
+                while (resultSet.next()) {
+                    Mokki mokki = new Mokki(resultSet.getString("mokkinimi"),
+                            resultSet.getString("katuosoite"),
+                            resultSet.getString("postinro"),
+                            resultSet.getDouble("hinta"),
+                            resultSet.getString("kuvaus"),
+                            resultSet.getInt("henkilomaara"),
+                            resultSet.getString("varustelu"));
+                    mokkiTiedot.add(mokki);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return mokkiTiedot;
+    }
+
 
     //Mökin taulukkoon tarvittavat kentät, muutettavissa tarpeen mukaan.
 

@@ -1,9 +1,40 @@
 package org.example.ohtkoodia;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.io.Serializable;
+import java.sql.*;
 
 //Tarvittava luokka, jotta taulukot toimivat
 public class Laskut implements Serializable {
+
+    // Metodi, joka palauttaa tietokannasta listan kaikista laskuista
+    public static ObservableList<Laskut> haeLaskutTietokannasta() {
+        ObservableList<Laskut> laskuTiedot = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM lasku";
+            try (Statement statement = connection.createStatement()) {
+                ResultSet resultSet1 = statement.executeQuery(query);
+                while (resultSet1.next()) {
+                    Laskut lasku = new Laskut(resultSet1.getInt("lasku_id"),
+                            resultSet1.getInt("varaus_id"),
+                            resultSet1.getDouble("summa"),
+                            resultSet1.getDouble("alv"),
+                            resultSet1.getInt("maksettu"));
+                    laskuTiedot.add(lasku);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return laskuTiedot;
+
+    }
     protected int laskuID;
     protected int varausID;
 

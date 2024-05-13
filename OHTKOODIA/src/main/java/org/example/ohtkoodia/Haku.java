@@ -4,10 +4,10 @@ import java.sql.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class Haku {
+public class Haku extends VJ {
 
     // Metodi hakee tietokannasta mökit annetun hakusanan perusteella
-    public ObservableList<Mokki> haeMokitTietokannasta(String hakusana) {
+    public static ObservableList<Mokki> haeMokitTietokannasta(String hakusana) {
         ObservableList<Mokki> mokkiTiedot = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn"; // Tietokannan URL
         String username = "pmauser"; // Tietokannan käyttäjänimi

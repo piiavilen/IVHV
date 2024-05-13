@@ -4,7 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import java.sql.*;
 
-public class Palvelut {
+public class Palvelut extends VJ{
     private String url = "jdbc:mysql://localhost:3307/vn";
     private String username = "pmauser";
     private String password = "password";
