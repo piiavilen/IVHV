@@ -41,36 +41,81 @@ public class Varaus {
     }
 
     // Metodi, joka palauttaa tietokannasta kaikki varaukset sisältävän listan
-    public static ObservableList<Varaus> haeVarauksetTietokannasta(int mokkiId) {
-        ObservableList<Varaus> varaukset = FXCollections.observableArrayList();
+    public static ObservableList<ObservableList<String>> haeVarauksetTietokannasta(int mokkiId) {
+        ObservableList<ObservableList<String>> data = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn";
         String username = "pmauser";
         String password = "password";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String query = "SELECT * FROM varaus WHERE mokki_id = ?";
+            String query = "SELECT asiakas.etunimi, asiakas.sukunimi, asiakas.puhelinnro, " +
+                    "asiakas.email, varaus.varattu_pvm, varaus.vahvistus_pvm, varaus.varattu_alkupvm," +
+                    "varaus.varattu_loppupvm " +
+                    "FROM varaus " +
+                    "INNER JOIN asiakas ON varaus.asiakas_id = asiakas.asiakas_id " +
+                    "WHERE varaus.mokki_id = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setInt(1, mokkiId);
-                ResultSet resultSet = preparedStatement.executeQuery();
-                while (resultSet.next()) {
-                    int varausId = resultSet.getInt("varaus_id");
-                    int asiakasId = resultSet.getInt("asiakas_id");
-                    Date varattuPvm = resultSet.getDate("varattu_pvm");
-                    Date vahvistusPvm = resultSet.getDate("vahvistus_pvm");
-                    Date varattuAlkupvm = resultSet.getDate("varattu_alkupvm");
-                    Date varattuLoppupvm = resultSet.getDate("varattu_loppupvm");
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    ResultSetMetaData metaData = resultSet.getMetaData();
+                    int columns = metaData.getColumnCount();
 
-                    Varaus varaus = new Varaus(varausId, asiakasId, mokkiId, varattuPvm, vahvistusPvm, varattuAlkupvm, varattuLoppupvm);
-                    varaukset.add(varaus);
+                    ObservableList<String> columnNames = FXCollections.observableArrayList();
+
+                    // Muokkaa columnit luettevampaan muotoon
+                    for (int i = 1; i <= columns; i++) {
+                        String columnName = metaData.getColumnName(i);
+
+                        switch (columnName) {
+                            case "etunimi":
+                                columnName = "Etunimi";
+                                break;
+                            case "sukunimi":
+                                columnName = "Sukunimi";
+                                break;
+                            case "puhelinnro":
+                                columnName = "Puhelinnumero";
+                                break;
+                            case "email":
+                                columnName = "E-mail";
+                                break;
+                            case "varattu_pvm":
+                                columnName = "Varattu";
+                                break;
+                            case "vahvistus_pvm":
+                                columnName = "Vahvistettu";
+                                break;
+                            case "varattu_alkupvm":
+                                columnName = "Varattu alkaen";
+                                break;
+                            case "varattu_loppupvm":
+                                columnName = "Varaus päättyy";
+                                break;
+                        }
+                        columnNames.add(columnName);
+                    }
+                    data.add(columnNames);
+
+                    // Lisää tiedot tietokannasta
+                    while (resultSet.next()) {
+                        ObservableList<String> row = FXCollections.observableArrayList();
+                        row.add(resultSet.getString("etunimi"));
+                        row.add(resultSet.getString("sukunimi"));
+                        row.add(resultSet.getString("puhelinnro"));
+                        row.add(resultSet.getString("email"));
+                        row.add(resultSet.getString("varattu_pvm"));
+                        row.add(resultSet.getString("vahvistus_pvm"));
+                        row.add(resultSet.getString("varattu_alkupvm"));
+                        row.add(resultSet.getString("varattu_loppupvm"));
+                        data.add(row);
+                    }
                 }
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
-        return varaukset;
+        return data;
     }
-
-
 
     private int varausId;
     private int asiakasId;

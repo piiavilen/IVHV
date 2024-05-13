@@ -1,15 +1,14 @@
 package org.example.ohtkoodia;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.sql.*;
@@ -252,8 +251,7 @@ public class VJ extends Application{
         TableColumn<Mokki, String> varusteluMOKKIColumn = new TableColumn<>("Varustelu");
         varusteluMOKKIColumn.setCellValueFactory(new PropertyValueFactory<>("varustelu"));
 
-
-
+        // Column jossa varausnappi, joka avaa uuden ikkunan varauksien tarkastelulle ja tekemiselle
         TableColumn<Mokki, String> varausMOKKIColumn = new TableColumn<>("Varaus");
         varausMOKKIColumn.setCellFactory(column -> {
             return new TableCell<Mokki, String>() {
@@ -262,22 +260,68 @@ public class VJ extends Application{
                 {
                     teeVarausbtn.setOnAction(event -> {
                         Mokki selectedMokki = getTableView().getItems().get(getIndex());
+                        ObservableList<ObservableList<String>> varaukset = Varaus.haeVarauksetTietokannasta(selectedMokki.getMokkiId());
 
-                        // Palauttaa valitun mökin varaukset
-                        ObservableList<Varaus> varaukset = Varaus.haeVarauksetTietokannasta(selectedMokki.getMokkiId());
+                        TableView<ObservableList<String>> tableView = new TableView<>();
+                        for (int i = 0; i < varaukset.get(0).size(); i++) {
+                            TableColumn<ObservableList<String>, String> column = new TableColumn<>(varaukset.get(0).get(i));
+                            final int columnIndex = i;
+                            column.setCellValueFactory(cellData -> {
+                                ObservableList<String> row = cellData.getValue();
+                                return new SimpleStringProperty(row.get(columnIndex));
+                            });
+                            tableView.getColumns().add(column);
+                        }
+                        varaukset.remove(0); // Remove column names from data
+                        tableView.setItems(varaukset);
 
-                        // Näytä varauksista ListView
-                        ListView<Varaus> varauksetListView = new ListView<>();
-                        varauksetListView.setItems(varaukset);
+                        // Varauksen tekoa varten informaatiokentät
+                        Label etunimiLabel = new Label("Etunimi:");
+                        TextField etunimiField = new TextField();
 
-                        VBox root = new VBox();
-                        root.getChildren().addAll(varauksetListView);
+                        Label sukunimiLabel = new Label("Sukunimi:");
+                        TextField sukunimiField = new TextField();
 
-                        Stage reservationStage = new Stage();
-                        Scene scene = new Scene(root);
-                        reservationStage.setScene(scene);
-                        reservationStage.show();
+                        Label puhnroLabel = new Label("Puhelinnumero");
+                        TextField puhnroField = new TextField();
+
+                        Label emailLabel = new Label("E-mail:");
+                        TextField emailField = new TextField();
+
+                        Label lahiosoiteLabel = new Label("Lähiosoite");
+                        TextField lahiosoiteField = new TextField();
+
+                        Label postinroLabel = new Label("Postinumero");
+                        TextField postinroField = new TextField();
+
+                        CheckBox vahvistettuCheckbox = new CheckBox("Vahvistettu?");
+
+                        Button teeVarausButton = new Button("Tee varaus");
+                        /* teeVarausButton.setOnAction(event -> {
+                            // PLACEHOLDER varauksen vahvistamiselle ja tietojen kirjoittamiseen tietokantaan
+                        });
+                         */
+
+                        // GridPane asettelulle
+                        GridPane gridPane = new GridPane();
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+                        gridPane.setPadding(new Insets(10));
+
+                        gridPane.addRow(0, etunimiLabel, etunimiField, sukunimiLabel, sukunimiField);
+                        gridPane.addRow(1, puhnroLabel, puhnroField, emailLabel, emailField);
+                        gridPane.addRow(2, lahiosoiteLabel, lahiosoiteField, postinroLabel, postinroField);
+                        gridPane.addRow(3, vahvistettuCheckbox);
+                        gridPane.addRow(4, teeVarausButton);
+
+                        // VBoxi jotta TableView ja GridPane saadaan aseteltua
+                        VBox root = new VBox(tableView, gridPane);
+                        Scene scene = new Scene(root, 865,750);
+                        Stage varausStage = new Stage();
+                        varausStage.setScene(scene);
+                        varausStage.show();
                     });
+
                 }
 
                 @Override
