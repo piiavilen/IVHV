@@ -17,6 +17,7 @@ import java.sql.*;
 public class VJ extends Application{
 
     // private Haku haku = new Haku(); // Luo uusi Haku-olio
+    //testivittu
 
     //----------------------------METODIT------------------------------------------------------------------------------
 
