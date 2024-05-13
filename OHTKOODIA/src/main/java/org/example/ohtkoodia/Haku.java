@@ -22,7 +22,7 @@ public class Haku {
                     // Käsitellään kyselyn tulos
                     while (resultSet.next()) {
                         // Luodaan uusi Mokki-olio tietokannasta saaduilla tiedoilla ja lisätään se ObservableListiin
-                        Mokki mokki = new Mokki(
+                        Mokki mokki = new Mokki(resultSet.getInt("mokki_id"),
                                 resultSet.getString("mokkinimi"),
                                 resultSet.getString("katuosoite"),
                                 resultSet.getString("postinro"),

@@ -15,9 +15,11 @@ public class Mokki implements Serializable {
     protected String kuvaus;
     protected int hlomaara;
     protected String varustelu;
+    protected int mokkiId;
 
     //Mökin parametrillinen alustaja
-    public Mokki(String nimi, String osoite, String postinro, double hinta, String kuvaus, int hlomaara, String varustelu) {
+    public Mokki(int mokkiId, String nimi, String osoite, String postinro, double hinta, String kuvaus, int hlomaara, String varustelu) {
+        this.mokkiId = mokkiId;
         this.nimi = nimi;
         this.osoite = osoite;
         this.postinro = postinro;
@@ -85,4 +87,19 @@ public class Mokki implements Serializable {
     public void setVarustelu(String varustelu) {
         this.varustelu = varustelu;
     }
+
+    public int getMokkiId() {
+        return this.mokkiId;
+    }
+
+    public void setMokkiId(int mokkiId) {
+        this.mokkiId = mokkiId;
+    }
+
+    // Lisätään toString-metodi, jotta mökkien nimet näkyvät oikein Varaus-tabissa
+    @Override
+    public String toString() {
+        return nimi;
+    }
+
 }
