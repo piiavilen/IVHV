@@ -12,6 +12,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.sql.*;
+import java.time.LocalDate;
 
 
 public class VJ extends Application{
@@ -139,6 +140,28 @@ public class VJ extends Application{
         }
     }
 
+    public int haeUusinAsiakasIdTietokannasta() {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "pmauser";
+        String password = "password";
+
+        int uusinAsiakasId = 0;
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "SELECT MAX(asiakas_id) AS max_asiakas_id FROM asiakas";
+            try (Statement stmt = connection.createStatement();
+                 ResultSet resultSet = stmt.executeQuery(sql)) {
+
+                if (resultSet.next()) {
+                    uusinAsiakasId = resultSet.getInt("max_asiakas_id");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return uusinAsiakasId;
+    }
 
 
     //--------------POSTINUMERO-METODIT---------------------
@@ -190,6 +213,7 @@ public class VJ extends Application{
         }
         return postiNumerot;
     }
+
 
 
     //--------------------------------------UI-------------------------------------------------------------------------
@@ -267,7 +291,8 @@ public class VJ extends Application{
                         tableView.setItems(varaukset);
 
                         // Varauksen tekoa varten informaatiokentät
-                        Label asiakasPostiSyotto = new Label("Lisää ensin asiakkaan postinumero ja -toimipaikka");
+
+                        Label asiakasPostiSyottoLbl = new Label("Lisää ensin asiakkaan postinumero ja -toimipaikka");
 
                         Label postinroLabel = new Label("Postinumero");
                         TextField postinroField = new TextField();
@@ -306,8 +331,8 @@ public class VJ extends Application{
 
                         CheckBox vahvistettuCheckbox = new CheckBox("Vahvistettu?");
 
-                        Button teeVarausButton = new Button("Tee varaus");
-                        teeVarausButton.setOnAction(e -> {
+                        Button tallennaAsiakasButton = new Button("Tallenna asiakastiedot");
+                        tallennaAsiakasButton.setOnAction(e -> {
                             String postiNro = postiNroCB.getValue();
                             String etuNimi = etunimiField.getText();
                             String sukuNimi = sukunimiField.getText();
@@ -318,6 +343,34 @@ public class VJ extends Application{
                             kirjoitaAsiakasTietokantaan(postiNro, etuNimi, sukuNimi, lahiOsoite, email, puhelinNro);
                         });
 
+                        Label varausAlkuPvmLbl = new Label("Milloin varaus alkaa?");
+                        DatePicker varausAlkuPvmValitsin = new DatePicker();
+                        Label varausLoppuPvmLbl = new Label("Milloin varaus loppuu?");
+                        DatePicker varausLoppuPvmValitsin = new DatePicker();
+
+                        Button tallennaVarausAikaButton = new Button("Tee varaus");
+                        tallennaVarausAikaButton.setOnAction(e -> {
+                            boolean onVahvistettu = vahvistettuCheckbox.isSelected();
+                            LocalDate vahvistusPvm = null;
+                            if (onVahvistettu) {
+                                vahvistusPvm = LocalDate.now();
+                            }
+
+                            int asiakas_id = haeUusinAsiakasIdTietokannasta();
+                            int mokki_id = selectedMokki.getMokkiId();
+                            LocalDate varausPvm = LocalDate.now();
+                            java.sql.Date varattu_pvm = java.sql.Date.valueOf(varausPvm);
+                            java.sql.Date vahvistus_pvm = java.sql.Date.valueOf(vahvistusPvm);
+                            LocalDate alkuPvm = varausAlkuPvmValitsin.getValue();
+                            LocalDate loppuPvm = varausLoppuPvmValitsin.getValue();
+                            java.sql.Date varattu_alkupvm = java.sql.Date.valueOf(alkuPvm);
+                            java.sql.Date varattu_loppupvm = java.sql.Date.valueOf(loppuPvm);
+
+                            Varaus mokkiVaraus = new Varaus(asiakas_id, mokki_id, varattu_pvm, vahvistus_pvm,
+                                    varattu_alkupvm, varattu_loppupvm);
+                            mokkiVaraus.kirjoitaVarausTietokantaan(mokkiVaraus);
+                        });
+
 
                         // GridPane asettelulle
                         GridPane gridPane = new GridPane();
@@ -325,14 +378,19 @@ public class VJ extends Application{
                         gridPane.setVgap(10);
                         gridPane.setPadding(new Insets(10));
 
-                        gridPane.addRow(0, asiakasPostiSyotto);
-                        gridPane.addRow(1, postinroLabel, postinroField, toimiPaikkaLabel, toimiPaikkaField);
-                        gridPane.addRow(2, tallennaPostiButton);
-                        gridPane.addRow(3, etunimiLabel, etunimiField, sukunimiLabel, sukunimiField);
-                        gridPane.addRow(4, puhnroLabel, puhnroField, emailLabel, emailField);
-                        gridPane.addRow(5, lahiosoiteLabel, lahiosoiteField, valitsePostiNroLbl, postiNroCB);
-                        gridPane.addRow(6, vahvistettuCheckbox);
-                        gridPane.addRow(7, teeVarausButton);
+
+                        gridPane.addRow(1, asiakasPostiSyottoLbl);
+                        gridPane.addRow(2, postinroLabel, postinroField, toimiPaikkaLabel, toimiPaikkaField);
+                        gridPane.addRow(3, tallennaPostiButton);
+                        gridPane.addRow(4, etunimiLabel, etunimiField, sukunimiLabel, sukunimiField);
+                        gridPane.addRow(5, puhnroLabel, puhnroField, emailLabel, emailField);
+                        gridPane.addRow(6, lahiosoiteLabel, lahiosoiteField, valitsePostiNroLbl, postiNroCB);
+                        gridPane.addRow(7, tallennaAsiakasButton);
+                        gridPane.addRow(8, varausAlkuPvmLbl, varausAlkuPvmValitsin);
+                        gridPane.addRow(9, varausLoppuPvmLbl, varausLoppuPvmValitsin);
+                        gridPane.addRow(10, vahvistettuCheckbox);
+                        gridPane.addRow(11, tallennaVarausAikaButton);
+
 
                         // VBoxi jotta TableView ja GridPane saadaan aseteltua
                         VBox root = new VBox(tableView, gridPane);

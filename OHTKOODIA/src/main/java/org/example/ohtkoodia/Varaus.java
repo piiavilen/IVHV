@@ -126,8 +126,7 @@ public class Varaus {
     private Date varattuLoppupvm;
 
     // Constructor
-    public Varaus(int varausId, int asiakasId, int mokkiId, Date varattuPvm, Date vahvistusPvm, Date varattuAlkupvm, Date varattuLoppupvm) {
-        this.varausId = varausId;
+    public Varaus(int asiakasId, int mokkiId, Date varattuPvm, Date vahvistusPvm, Date varattuAlkupvm, Date varattuLoppupvm) {
         this.asiakasId = asiakasId;
         this.mokkiId = mokkiId;
         this.varattuPvm = varattuPvm;
