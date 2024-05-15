@@ -215,17 +215,6 @@ public class VJ extends Application{
 //HAKUPAINIKE SIIRRETTY TABLEVIEW OSIOON TOIMINNALLISUUDEN VUOKSI!!!
 
 
-        //-- Slideri
-        Label hintaSliderLbl = new Label("Hinta: ");
-        Slider hintaSlider = new Slider(0, 100, 50);
-        Label hintaArvoLbl = new Label(hintaSlider.getValue() + "€");
-
-
-
-        hintaSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            hintaArvoLbl.setText(String.format("%.2f €", newValue.doubleValue()));
-        }));
-
         //-----------------------------MÖKKITAULUKKO-------------------------------------
         // Luo TableView
         TableView<Mokki> mokkiTableView = new TableView<>();
@@ -278,6 +267,25 @@ public class VJ extends Application{
                         tableView.setItems(varaukset);
 
                         // Varauksen tekoa varten informaatiokentät
+                        Label asiakasPostiSyotto = new Label("Lisää ensin asiakkaan postinumero ja -toimipaikka");
+
+                        Label postinroLabel = new Label("Postinumero");
+                        TextField postinroField = new TextField();
+
+                        Label toimiPaikkaLabel = new Label("Postitoimipaikka");
+                        TextField toimiPaikkaField = new TextField();
+
+                        ComboBox<String> postiNroCB = new ComboBox<>();
+                        postiNroCB.setItems(haePostiNroTietokannasta());
+
+                        Button tallennaPostiButton = new Button("Tallenna posti");
+                        tallennaPostiButton.setOnAction(e -> {
+                            String postiNro = postinroField.getText();
+                            String toimiPaikka = toimiPaikkaField.getText();
+                            kirjoitaPostiNroTietokantaan(postiNro, toimiPaikka);
+                            postiNroCB.setItems(haePostiNroTietokannasta());
+                        });
+
                         Label etunimiLabel = new Label("Etunimi:");
                         TextField etunimiField = new TextField();
 
@@ -293,16 +301,23 @@ public class VJ extends Application{
                         Label lahiosoiteLabel = new Label("Lähiosoite");
                         TextField lahiosoiteField = new TextField();
 
-                        Label postinroLabel = new Label("Postinumero");
-                        TextField postinroField = new TextField();
+                        Label valitsePostiNroLbl = new Label("Valitse postinumero:");
+                        // Postinumero ComboBox luodaan ylempänä, jotta sen voi päivittää
 
                         CheckBox vahvistettuCheckbox = new CheckBox("Vahvistettu?");
 
                         Button teeVarausButton = new Button("Tee varaus");
-                        /* teeVarausButton.setOnAction(event -> {
-                            // PLACEHOLDER varauksen vahvistamiselle ja tietojen kirjoittamiseen tietokantaan
+                        teeVarausButton.setOnAction(e -> {
+                            String postiNro = postiNroCB.getValue();
+                            String etuNimi = etunimiField.getText();
+                            String sukuNimi = sukunimiField.getText();
+                            String lahiOsoite = lahiosoiteField.getText();
+                            String email = emailField.getText();
+                            String puhelinNro = puhnroField.getText();
+
+                            kirjoitaAsiakasTietokantaan(postiNro, etuNimi, sukuNimi, lahiOsoite, email, puhelinNro);
                         });
-                         */
+
 
                         // GridPane asettelulle
                         GridPane gridPane = new GridPane();
@@ -310,11 +325,14 @@ public class VJ extends Application{
                         gridPane.setVgap(10);
                         gridPane.setPadding(new Insets(10));
 
-                        gridPane.addRow(0, etunimiLabel, etunimiField, sukunimiLabel, sukunimiField);
-                        gridPane.addRow(1, puhnroLabel, puhnroField, emailLabel, emailField);
-                        gridPane.addRow(2, lahiosoiteLabel, lahiosoiteField, postinroLabel, postinroField);
-                        gridPane.addRow(3, vahvistettuCheckbox);
-                        gridPane.addRow(4, teeVarausButton);
+                        gridPane.addRow(0, asiakasPostiSyotto);
+                        gridPane.addRow(1, postinroLabel, postinroField, toimiPaikkaLabel, toimiPaikkaField);
+                        gridPane.addRow(2, tallennaPostiButton);
+                        gridPane.addRow(3, etunimiLabel, etunimiField, sukunimiLabel, sukunimiField);
+                        gridPane.addRow(4, puhnroLabel, puhnroField, emailLabel, emailField);
+                        gridPane.addRow(5, lahiosoiteLabel, lahiosoiteField, valitsePostiNroLbl, postiNroCB);
+                        gridPane.addRow(6, vahvistettuCheckbox);
+                        gridPane.addRow(7, teeVarausButton);
 
                         // VBoxi jotta TableView ja GridPane saadaan aseteltua
                         VBox root = new VBox(tableView, gridPane);
@@ -475,74 +493,13 @@ public class VJ extends Application{
         });
 
 
-        ylaPaneeli.getChildren().addAll(hakuKentta, hintaSliderLbl, hintaSlider, hintaArvoLbl, hakuBt, mokkiTiedonSyottoBt, alueTiedonSyottoBt);
+        ylaPaneeli.getChildren().addAll(hakuKentta, hakuBt, alueTiedonSyottoBt, mokkiTiedonSyottoBt);
 
 
         //-----------------------------LASKUTAB-------------------------------------
         Tab laskuTab = new Tab("Laskut");
         BorderPane laskuTabPaneeli = new BorderPane();
         laskuTab.setContent(laskuTabPaneeli);
-
-        // Nappi, joka avaa ikkunan, josta syötetään tietoja asiakas-tauluun
-        Button asiakasTiedonSyottoBt = new Button("Syötä asiakastietoja");
-        asiakasTiedonSyottoBt.setOnAction(e -> {
-            Stage stage = new Stage();
-            stage.setTitle("Syötä asiakastiedot");
-            VBox atsPaneeli = new VBox();
-            atsPaneeli.setSpacing(5);
-
-            Label postiLisaysLbl = new Label("Lisää asiakkaan postinumero ja -toimipaikka");
-            Label postiNroLbl = new Label("Postinumero");
-            TextField postiNroTf = new TextField();
-            Label toimiPaikkaLbl = new Label("Toimipaikka");
-            TextField toimiPaikkaTf = new TextField();
-            ComboBox<String> postiNroCB = new ComboBox<>();
-
-            // Nappi, joka ajaa metodin, jolla ylläolevien kenttien inputit tallennetaan posti-tauluun
-            Button tallennaPostiBt = new Button("Tallenna tiedot");
-            tallennaPostiBt.setOnAction(p -> {
-                String postiNro = postiNroTf.getText();
-                String toimiPaikka = toimiPaikkaTf.getText();
-                kirjoitaPostiNroTietokantaan(postiNro, toimiPaikka);
-                postiNroCB.setItems(haePostiNroTietokannasta());
-            });
-
-            Label etuNimiLbl = new Label("Etunimi:");
-            TextField etuNimiTf = new TextField();
-            Label sukuNimiLbl = new Label("Sukunimi:");
-            TextField sukuNimiTf = new TextField();
-            Label asiaksOsoiteLbl = new Label("Osoite:");
-            TextField asiakasOsoiteTf = new TextField();
-            Label valitsePostiNroLbl = new Label("Valitse postinumero:");
-            //postinumeroCB ylempänä, jotta ComboBox refreshaa heti jos lisätään uusi posti
-            postiNroCB.setItems(haePostiNroTietokannasta());
-            Label emailLbl = new Label("Sähköposti:");
-            TextField emailTf = new TextField();
-            Label puhelinnroLbl = new Label("Puhelinnumero:");
-            TextField puhelinnroTf = new TextField();
-
-            // Nappi, joka tallentaa ylläolevien kenttien inputit asiakas-tauluun
-            Button tallennaAsiakasBt = new Button("Tallenna tiedot");
-            tallennaAsiakasBt.setOnAction(p -> {
-                String postiNro = postiNroCB.getValue();
-                String etuNimi = etuNimiTf.getText();
-                String sukuNimi = sukuNimiTf.getText();
-                String lahiOsoite = asiakasOsoiteTf.getText();
-                String email = emailTf.getText();
-                String puhelinNro = puhelinnroTf.getText();
-
-                kirjoitaAsiakasTietokantaan(postiNro, etuNimi, sukuNimi, lahiOsoite, email, puhelinNro);
-                stage.close();
-            });
-
-            atsPaneeli.getChildren().addAll(postiLisaysLbl, postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf,
-                    tallennaPostiBt, etuNimiLbl, etuNimiTf, sukuNimiLbl, sukuNimiTf, asiaksOsoiteLbl, asiakasOsoiteTf,
-                    valitsePostiNroLbl, postiNroCB, emailLbl, emailTf, puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
-
-            Scene scene = new Scene(atsPaneeli, 400, 510);
-            stage.setScene(scene);
-            stage.show();
-        });
 
         //----------------------------------------------------------TABLEVIEW-----------------------------------------
         // Luo TableView
@@ -567,7 +524,6 @@ public class VJ extends Application{
         maksettuColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("maksettu"));
 
         //------------------------------------------------------
-        laskuTabPaneeli.setTop(asiakasTiedonSyottoBt);
 
         laskuTableView.getColumns().addAll(IdLASKUColumn, IdVARAUSColumn, SummaColumn, alvColumn, maksettuColumn);
         lasku.addAll(Laskut.haeLaskutTietokannasta());
@@ -581,7 +537,7 @@ public class VJ extends Application{
         tabit.getTabs().addAll(mokkiTab, laskuTab);
         paneeli.setCenter(tabit);
 
-        Scene scene = new Scene(paneeli, 800, 600);
+        Scene scene = new Scene(paneeli, 1000, 600);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Mökin varausjärjestelmä");
         primaryStage.show();
