@@ -6,44 +6,49 @@ import java.sql.*;
 
 public class Palvelut extends VJ{
     private String url = "jdbc:mysql://localhost:3307/vn";
-    private String username = "pmauser";
-    private String password = "password";
+    private String username = "root";
+    private String password = "";
 
     // Metodi, joka hakee palvelut tietokannasta
     public ObservableList<Palvelu> haePalvelutTietokannasta() {
         ObservableList<Palvelu> palvelut = FXCollections.observableArrayList();
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String query = "SELECT p.*, a.nimi AS alue_nimi FROM palvelu p JOIN alue a ON p.alue_id = a.alue_id";
+            String query = "SELECT p.nimi, p.kuvaus, p.hinta, p.alue_id FROM palvelu p";
             try (Statement statement = connection.createStatement()) {
                 ResultSet resultSet = statement.executeQuery(query);
                 while (resultSet.next()) {
-                    int palveluId = resultSet.getInt("palvelu_id");
+                    // int palveluId = resultSet.getInt("palNvelu_id");
                     String nimi = resultSet.getString("nimi");
                     String kuvaus = resultSet.getString("kuvaus");
                     double hinta = resultSet.getDouble("hinta");
-                    int alueId = resultSet.getInt("alue_id");
-                    String alueNimi = resultSet.getString("alue_nimi");
-                    Palvelu palvelu = new Palvelu(palveluId, nimi, kuvaus, hinta, alueId);
+                    int alue_id = resultSet.getInt("alue_id");
+                    // String alueNimi = resultSet.getString("alue_nimi");
+                    Palvelu palvelu = new Palvelu(nimi, kuvaus, hinta, alue_id);
                     palvelut.add(palvelu);
                 }
             }
         } catch (SQLException e) {
+            // Tulosta virheilmoitus konsoliin
+            System.err.println("Tietokantavirhe: " + e.getMessage());
+            // Tulosta virheen jäljitys
             e.printStackTrace();
         }
 
         return palvelut;
     }
 
+
     // Metodi, joka lisää uuden palvelun tietokantaan
-    public void lisaaPalveluTietokantaan(String nimi, String kuvaus, double hinta, int alueId) {
+    public void lisaaPalveluTietokantaan(String nimi, String kuvaus, double hinta, double alv, int alue_id) {
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            String sql = "INSERT INTO palvelu (nimi, kuvaus, hinta, alue_id) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO palvelu (nimi, kuvaus, hinta, alv, alue_id) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, nimi);
                 preparedStatement.setString(2, kuvaus);
                 preparedStatement.setDouble(3, hinta);
-                preparedStatement.setInt(4, alueId);
+                preparedStatement.setDouble(4, alv);
+                preparedStatement.setInt(5, alue_id);
 
                 int affectedRows = preparedStatement.executeUpdate();
 
@@ -58,29 +63,25 @@ public class Palvelut extends VJ{
         }
     }
 
-    public class Palvelu {
+    public static class Palvelu {
         private int palveluId;
         private String nimi;
         private String kuvaus;
         private double hinta;
-        private int alueId; // Viittaus alue-taulun primary keyhin
+        private int alue_id; // Viittaus alue-taulun primary keyhin
 
         // Konstruktori
-        public Palvelu(int palveluId, String nimi, String kuvaus, double hinta, int alueId) {
-            this.palveluId = palveluId;
+        public Palvelu(String nimi, String kuvaus, double hinta, int alue_id) {
+            // this.palveluId = palveluId;
             this.nimi = nimi;
             this.kuvaus = kuvaus;
             this.hinta = hinta;
-            this.alueId = alueId;
+            this.alue_id = alue_id;
         }
 
         // Getterit ja setterit
         public int getPalveluId() {
             return palveluId;
-        }
-
-        public void setPalveluId(int palveluId) {
-            this.palveluId = palveluId;
         }
 
         public String getNimi() {
@@ -107,24 +108,14 @@ public class Palvelut extends VJ{
             this.hinta = hinta;
         }
 
-        public int getAlueId() {
-            return alueId;
+        public int getAlue_id() {
+            return alue_id;
         }
 
-        public void setAlueId(int alueId) {
-            this.alueId = alueId;
+        public void setAlue_id(int alue_id) {
+            this.alue_id = alue_id;
         }
 
-        @Override
-        public String toString() {
-            return "Palvelu{" +
-                    "palveluId=" + palveluId +
-                    ", nimi='" + nimi + '\'' +
-                    ", kuvaus='" + kuvaus + '\'' +
-                    ", hinta=" + hinta +
-                    ", alueId=" + alueId +
-                    '}';
-        }
     }
 
 }

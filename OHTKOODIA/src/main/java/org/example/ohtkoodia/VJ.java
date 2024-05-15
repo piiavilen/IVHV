@@ -36,8 +36,8 @@ public class VJ extends Application{
     // Metodi, joka kirjoittaa alueen tiedot tietokantaan
     public void kirjoitaAlueTietokantaan(String nimi) {
         String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
+        String username = "root";
+        String password = "";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             String sql = "INSERT INTO alue (nimi) VALUES (?)";
@@ -60,8 +60,8 @@ public class VJ extends Application{
     // Metodi, joka hakee aluenimen perusteella oikean alue_id:n ja syöttää sen mokki-tauluun alue_id:seen
     public int haeAlueId(String alueNimi) {
         String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
+        String username = "root";
+        String password = "";
 
         int alueId = -1;
 
@@ -88,8 +88,8 @@ public class VJ extends Application{
     public ObservableList<String> haeAlueetTietokannasta() {
         ObservableList<String> alueNimet = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
+        String username = "root";
+        String password = "";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             String query = "SELECT nimi FROM alue";
@@ -114,8 +114,8 @@ public class VJ extends Application{
     public void kirjoitaAsiakasTietokantaan(String postiNro, String etuNimi, String sukuNimi, String lahiosoite,
                                             String email, String puhelinNro) {
         String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
+        String username = "root";
+        String password = "";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             String sql = "INSERT INTO asiakas (postinro, etunimi, sukunimi, lahiosoite, email, puhelinnro) VALUES (?, ?, ?, ?, ?, ?)";
@@ -142,8 +142,8 @@ public class VJ extends Application{
 
     public int haeUusinAsiakasIdTietokannasta() {
         String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
+        String username = "root";
+        String password = "";
 
         int uusinAsiakasId = 0;
 
@@ -171,8 +171,8 @@ public class VJ extends Application{
     // Metodi, joka kirjoittaa postinumeron ja toimipaikan tietokantaan
     public void kirjoitaPostiNroTietokantaan(String postiNro, String toimiPaikka) {
         String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
+        String username = "root";
+        String password = "";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             String sql = "INSERT INTO posti (postinro, toimipaikka) VALUES (?, ?)";
@@ -196,8 +196,8 @@ public class VJ extends Application{
     public ObservableList<String> haePostiNroTietokannasta() {
         ObservableList<String> postiNumerot = FXCollections.observableArrayList();
         String url = "jdbc:mysql://localhost:3307/vn";
-        String username = "pmauser";
-        String password = "password";
+        String username = "root";
+        String password = "";
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             String query = "SELECT postinro FROM posti";
@@ -590,9 +590,110 @@ public class VJ extends Application{
         // Lisää taulukko BorderPaneen
         laskuTabPaneeli.setCenter(laskuTableView);
 
-        //------------------------------------------------------------------------------------------------------------
+        //----------------------Palvelut-tab--------------------------------------------------------------------------
 
-        tabit.getTabs().addAll(mokkiTab, laskuTab);
+        Tab palvelutTab = new Tab("Palvelut");
+        BorderPane palvelutPaneeli = new BorderPane();
+        palvelutTab.setContent(palvelutPaneeli);
+
+        // Luo TableView palveluille
+        TableView<Palvelut.Palvelu> palveluTableView = new TableView<>();
+        // Luo sarakkeet taulukkoon
+        TableColumn<Palvelut.Palvelu, String> nimiColumn = new TableColumn<>("Nimi");
+        TableColumn<Palvelut.Palvelu, String> kuvausColumn = new TableColumn<>("Kuvaus");
+        TableColumn<Palvelut.Palvelu, Double> hintaColumn = new TableColumn<>("Hinta");
+        TableColumn<Palvelut.Palvelu, Integer> alue_idColumn = new TableColumn<>("Alue_ID");
+
+        // Määrittele miten Palvelu-olioiden kentät liittyvät TableView:n sarakkeisiin
+        nimiColumn.setCellValueFactory(new PropertyValueFactory<>("nimi"));
+        kuvausColumn.setCellValueFactory(new PropertyValueFactory<>("kuvaus"));
+        hintaColumn.setCellValueFactory(new PropertyValueFactory<>("hinta"));
+        alue_idColumn.setCellValueFactory(new PropertyValueFactory<>("alueID"));
+
+        // Lisää sarakkeet taulukkoon
+        palveluTableView.getColumns().addAll(nimiColumn, kuvausColumn, hintaColumn, alue_idColumn);
+
+        // Haetaan palvelut tietokannasta ja asetetaan ne TableView:hen
+        Palvelut palvelut = new Palvelut();
+        ObservableList<Palvelut.Palvelu> haetutPalvelut = palvelut.haePalvelutTietokannasta();
+        palveluTableView.setItems(haetutPalvelut);
+
+        // Lisää taulukko BorderPaneen
+        palvelutPaneeli.setCenter(palveluTableView);
+
+        // Luo nappi uuden palvelun lisäämiseksi
+        Button lisaaPalveluButton = new Button("Lisää uusi palvelu");
+
+        // Lisää nappi BorderPaneen
+        palvelutPaneeli.setTop(lisaaPalveluButton);
+
+        // Napin toiminnallisuus
+        lisaaPalveluButton.setOnAction(event -> {
+            // Luo uusi ikkuna palvelun lisäämistä varten
+            Stage lisaaPalveluStage = new Stage();
+            lisaaPalveluStage.setTitle("Lisää uusi palvelu");
+
+            // Luo tarvittavat tekstikentät ja muut komponentit
+            Label nimiLabel = new Label("Nimi:");
+            TextField nimiTextField = new TextField();
+
+            Label kuvausLabel = new Label("Kuvaus:");
+            TextField kuvausTextField = new TextField();
+
+            Label hintaLabel = new Label("Hinta:");
+            TextField hintaTextField = new TextField();
+
+            Label alue_idLabel = new Label("Alue_ID:");
+            TextField alue_idTextField = new TextField();
+
+            Label palveluAlvLabel = new Label("ALV:");
+            TextField palveluAlvTextField = new TextField();
+
+            Button tallennaButton = new Button("Tallenna");
+
+            // Aseta tapahtumankuuntelija tallennusnapille
+            tallennaButton.setOnAction(e -> {
+                String palveluNimi = nimiTextField.getText();
+                String palveluKuvaus = kuvausTextField.getText();
+                double palveluHinta = Double.parseDouble(hintaTextField.getText());
+                int palveluAlv = Integer.parseInt(palveluAlvTextField.getText());
+                int palveluAlueID = Integer.parseInt(alue_idTextField.getText());
+
+
+                // Lisätään palvelu tietokantaan
+                Palvelut uusiPalvelu = new Palvelut();
+                uusiPalvelu.lisaaPalveluTietokantaan(palveluNimi, palveluKuvaus, palveluHinta, palveluAlv, palveluAlueID);
+
+                // Haetaan päivitetyt palvelut tietokannasta ja päivitetään TableView
+                ObservableList<Palvelut.Palvelu> uudetPalvelut = palvelut.haePalvelutTietokannasta();
+                palveluTableView.setItems(uudetPalvelut);
+
+                // Sulje ikkuna palvelun lisäämisen jälkeen
+                lisaaPalveluStage.close();
+            });
+
+            // Luo asettelupaneeli ja aseta komponentit siihen
+            VBox layout = new VBox(10);
+            layout.getChildren().addAll(
+                    nimiLabel, nimiTextField,
+                    kuvausLabel, kuvausTextField,
+                    hintaLabel, hintaTextField,
+                    alue_idLabel, alue_idTextField,
+                    palveluAlvLabel, palveluAlvTextField,
+                    tallennaButton
+            );
+            layout.setPadding(new Insets(10));
+
+            // Aseta asettelupaneeli näytettäväksi ikkunassa
+            Scene scene = new Scene(layout, 500, 400);
+            lisaaPalveluStage.setScene(scene);
+            lisaaPalveluStage.show();
+        });
+
+        // Lisää nappi BorderPaneen
+        palvelutPaneeli.setTop(lisaaPalveluButton);
+
+        tabit.getTabs().addAll(mokkiTab, laskuTab, palvelutTab);
         paneeli.setCenter(tabit);
 
         Scene scene = new Scene(paneeli, 1000, 600);
