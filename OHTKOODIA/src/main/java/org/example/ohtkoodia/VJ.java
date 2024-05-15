@@ -359,7 +359,7 @@ public class VJ extends Application{
         tarkemmin!!
 
         TableColumn<Mokki, Void> varausbtnColumn = new TableColumn<>("Tee varaus");
-        varausbtnColumn.setCellValueFactory(column -> new TableCell<>()
+        varausbtnColumn.setCellValueFactory(column -> new TableCell<>()x
             Button teeVarausbtn = new Button("Tee varaus");
         */
 
@@ -387,10 +387,12 @@ public class VJ extends Application{
             VBox mtsPaneeli = new VBox();
             mtsPaneeli.setSpacing(5);
 
-            Label postiNroLbl = new Label("Postinumero");
+            Label postiLisaysLbl = new Label("Lisää mökin postinumero ja -toimipaikka");
+            Label postiNroLbl = new Label("Postinumero:");
             TextField postiNroTf = new TextField();
-            Label toimiPaikkaLbl = new Label("Toimipaikka");
+            Label toimiPaikkaLbl = new Label("Toimipaikka:");
             TextField toimiPaikkaTf = new TextField();
+            ComboBox<String> postiNroCB = new ComboBox<>();
 
             // Button, joka ajaa metodin, joka tallentaa ylläolevien kenttien inputit posti-tauluun
             Button tallennaPostiBt = new Button("Tallenna tiedot");
@@ -398,6 +400,7 @@ public class VJ extends Application{
                 String postiNro = postiNroTf.getText();
                 String toimiPaikka = toimiPaikkaTf.getText();
                 kirjoitaPostiNroTietokantaan(postiNro, toimiPaikka);
+                postiNroCB.setItems(haePostiNroTietokannasta());
             });
 
             Label nimiLbl = new Label("Mökin nimi:");
@@ -406,7 +409,7 @@ public class VJ extends Application{
             ComboBox<String> alueCB = new ComboBox<>();
             alueCB.setItems(haeAlueetTietokannasta());
             Label valitsePostiNroLbl = new Label("Valitse postinumero:");
-            ComboBox<String> postiNroCB = new ComboBox<>();
+            //itse postiNroCB ylempänä, jotta refresh toimii
             postiNroCB.setItems(haePostiNroTietokannasta());
             Label osoiteLbl = new Label("Osoite:");
             TextField osoiteTf = new TextField();
@@ -433,13 +436,14 @@ public class VJ extends Application{
                 int henkilo = Integer.parseInt(henkiloTf.getText());
                 String varustelu = varusteluTf.getText();
                 Mokki.kirjoitaMokkiTietokantaan(alueId, postiNro, mokkinimi, katuosoite, hinta, kuvaus, henkilo, varustelu);
+                stage.close();
             });
 
-            mtsPaneeli.getChildren().addAll(postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf, tallennaPostiBt,
+            mtsPaneeli.getChildren().addAll(postiLisaysLbl, postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf, tallennaPostiBt,
                     nimiLbl, nimiTf, alueLbl, alueCB, valitsePostiNroLbl, postiNroCB, osoiteLbl, osoiteTf, hintaLbl,
                     hintaTf, kuvausLbl, kuvausTa, henkiloLbl, henkiloTf, varusteluLbl, varusteluTf, tallennaMokkiBt);
 
-            Scene scene = new Scene(mtsPaneeli, 400, 600);
+            Scene scene = new Scene(mtsPaneeli, 400, 770);
             stage.setScene(scene);
             stage.show();
         });
@@ -460,11 +464,12 @@ public class VJ extends Application{
             tallennaAlueBt.setOnAction(p -> {
                 String alueNimi = alueNimiTf.getText();
                 kirjoitaAlueTietokantaan(alueNimi);
+                stage.close();
             });
 
             atsPaneeli.getChildren().addAll(alueNimiLbl, alueNimiTf, tallennaAlueBt);
 
-            Scene scene = new Scene(atsPaneeli, 400, 400);
+            Scene scene = new Scene(atsPaneeli, 400, 90);
             stage.setScene(scene);
             stage.show();
         });
@@ -486,10 +491,12 @@ public class VJ extends Application{
             VBox atsPaneeli = new VBox();
             atsPaneeli.setSpacing(5);
 
+            Label postiLisaysLbl = new Label("Lisää asiakkaan postinumero ja -toimipaikka");
             Label postiNroLbl = new Label("Postinumero");
             TextField postiNroTf = new TextField();
             Label toimiPaikkaLbl = new Label("Toimipaikka");
             TextField toimiPaikkaTf = new TextField();
+            ComboBox<String> postiNroCB = new ComboBox<>();
 
             // Nappi, joka ajaa metodin, jolla ylläolevien kenttien inputit tallennetaan posti-tauluun
             Button tallennaPostiBt = new Button("Tallenna tiedot");
@@ -497,6 +504,7 @@ public class VJ extends Application{
                 String postiNro = postiNroTf.getText();
                 String toimiPaikka = toimiPaikkaTf.getText();
                 kirjoitaPostiNroTietokantaan(postiNro, toimiPaikka);
+                postiNroCB.setItems(haePostiNroTietokannasta());
             });
 
             Label etuNimiLbl = new Label("Etunimi:");
@@ -506,7 +514,7 @@ public class VJ extends Application{
             Label asiaksOsoiteLbl = new Label("Osoite:");
             TextField asiakasOsoiteTf = new TextField();
             Label valitsePostiNroLbl = new Label("Valitse postinumero:");
-            ComboBox<String> postiNroCB = new ComboBox<>();
+            //postinumeroCB ylempänä, jotta ComboBox refreshaa heti jos lisätään uusi posti
             postiNroCB.setItems(haePostiNroTietokannasta());
             Label emailLbl = new Label("Sähköposti:");
             TextField emailTf = new TextField();
@@ -524,15 +532,14 @@ public class VJ extends Application{
                 String puhelinNro = puhelinnroTf.getText();
 
                 kirjoitaAsiakasTietokantaan(postiNro, etuNimi, sukuNimi, lahiOsoite, email, puhelinNro);
-
+                stage.close();
             });
 
-            atsPaneeli.getChildren().addAll(postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf, tallennaPostiBt,
-                    etuNimiLbl, etuNimiTf, sukuNimiLbl, sukuNimiTf, asiaksOsoiteLbl,
-                    asiakasOsoiteTf, valitsePostiNroLbl, postiNroCB, emailLbl, emailTf,
-                    puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
+            atsPaneeli.getChildren().addAll(postiLisaysLbl, postiNroLbl, postiNroTf, toimiPaikkaLbl, toimiPaikkaTf,
+                    tallennaPostiBt, etuNimiLbl, etuNimiTf, sukuNimiLbl, sukuNimiTf, asiaksOsoiteLbl, asiakasOsoiteTf,
+                    valitsePostiNroLbl, postiNroCB, emailLbl, emailTf, puhelinnroLbl, puhelinnroTf, tallennaAsiakasBt);
 
-            Scene scene = new Scene(atsPaneeli, 400, 500);
+            Scene scene = new Scene(atsPaneeli, 400, 510);
             stage.setScene(scene);
             stage.show();
         });
