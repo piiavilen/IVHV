@@ -68,15 +68,15 @@ public class Palvelut extends VJ{
         private String nimi;
         private String kuvaus;
         private double hinta;
-        private int alue_id; // Viittaus alue-taulun primary keyhin
+        private int alueID; // Viittaus alue-taulun primary keyhin
 
         // Konstruktori
-        public Palvelu(String nimi, String kuvaus, double hinta, int alue_id) {
+        public Palvelu(String nimi, String kuvaus, double hinta, int alueID) {
             // this.palveluId = palveluId;
             this.nimi = nimi;
             this.kuvaus = kuvaus;
             this.hinta = hinta;
-            this.alue_id = alue_id;
+            this.alueID = alueID;
         }
 
         // Getterit ja setterit
@@ -109,11 +109,11 @@ public class Palvelut extends VJ{
         }
 
         public int getAlue_id() {
-            return alue_id;
+            return alueID;
         }
 
         public void setAlue_id(int alue_id) {
-            this.alue_id = alue_id;
+            this.alueID = alueID;
         }
 
     }

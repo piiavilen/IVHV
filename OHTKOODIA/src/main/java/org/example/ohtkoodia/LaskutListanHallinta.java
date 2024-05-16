@@ -8,7 +8,7 @@ public class LaskutListanHallinta implements Serializable {
     private static final String LASKUTIEDOSTO = "Laskutiedosto.txt";
 
 
-    public static void TallennaLaskuTiedostoon (List<Laskut> laskudata){
+    public static void TallennaLaskuTiedostoon (List<Lasku> laskudata){
         try {
             FileOutputStream fos = new FileOutputStream(LASKUTIEDOSTO);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -21,13 +21,13 @@ public class LaskutListanHallinta implements Serializable {
         }
     }
 
-    protected static List<Laskut> LueLaskuTiedostosta(){
-        List<Laskut> laskudata = null;
+    protected static List<Lasku> LueLaskuTiedostosta(){
+        List<Lasku> laskudata = null;
         try {
             FileInputStream fis = new FileInputStream(LASKUTIEDOSTO);
             ObjectInputStream ois = new ObjectInputStream(fis);
 
-            laskudata = (List<Laskut>) ois.readObject();
+            laskudata = (List<Lasku>) ois.readObject();
             ois.close();
         }
         catch (EOFException e){

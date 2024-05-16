@@ -369,6 +369,14 @@ public class VJ extends Application{
                             Varaus mokkiVaraus = new Varaus(asiakas_id, mokki_id, varattu_pvm, vahvistus_pvm,
                                     varattu_alkupvm, varattu_loppupvm);
                             mokkiVaraus.kirjoitaVarausTietokantaan(mokkiVaraus);
+
+                            int lasku_id = Lasku.haeSeuraavaLaskuId();
+                            int varaus_id = Varaus.haeViimeisinVarausID();
+                            Double summa = selectedMokki.getHinta();
+                            Double alv = 10.0;
+                            int maksettu = 0;
+
+                            Lasku.kirjoitaLaskuTietokantaan(lasku_id, varaus_id, summa, alv, maksettu);
                         });
 
 
@@ -561,30 +569,30 @@ public class VJ extends Application{
 
         //----------------------------------------------------------TABLEVIEW-----------------------------------------
         // Luo TableView
-        TableView laskuTableView = new TableView<Laskut>();
+        TableView laskuTableView = new TableView<Lasku>();
         // Luo ObservableList
-        ObservableList<Laskut> lasku = FXCollections.observableArrayList();
+        ObservableList<Lasku> lasku = FXCollections.observableArrayList();
 
         // Luo sarakkeet
-        TableColumn IdLASKUColumn = new TableColumn<Laskut, Integer>("Lasku ID");
-        IdLASKUColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("varausID"));
+        TableColumn IdLASKUColumn = new TableColumn<Lasku, Integer>("Lasku ID");
+        IdLASKUColumn.setCellValueFactory(new PropertyValueFactory<Lasku, Integer>("varausID"));
 
-        TableColumn IdVARAUSColumn = new TableColumn<Laskut, Integer>("Varaus ID");
-        IdVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("varausID"));
+        TableColumn IdVARAUSColumn = new TableColumn<Lasku, Integer>("Varaus ID");
+        IdVARAUSColumn.setCellValueFactory(new PropertyValueFactory<Lasku, Integer>("varausID"));
 
-        TableColumn SummaColumn = new TableColumn<Laskut, Integer>("Summa");
-        SummaColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("summa"));
+        TableColumn SummaColumn = new TableColumn<Lasku, Integer>("Summa");
+        SummaColumn.setCellValueFactory(new PropertyValueFactory<Lasku, Integer>("summa"));
 
-        TableColumn alvColumn = new TableColumn<Laskut, Integer>("ALV");
-        alvColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("alv"));
+        TableColumn alvColumn = new TableColumn<Lasku, Integer>("ALV");
+        alvColumn.setCellValueFactory(new PropertyValueFactory<Lasku, Integer>("alv"));
 
-        TableColumn maksettuColumn = new TableColumn<Laskut, Integer>("Onko maksettu?");
-        maksettuColumn.setCellValueFactory(new PropertyValueFactory<Laskut, Integer>("maksettu"));
+        TableColumn maksettuColumn = new TableColumn<Lasku, Integer>("Onko maksettu?");
+        maksettuColumn.setCellValueFactory(new PropertyValueFactory<Lasku, Integer>("maksettu"));
 
         //------------------------------------------------------
 
         laskuTableView.getColumns().addAll(IdLASKUColumn, IdVARAUSColumn, SummaColumn, alvColumn, maksettuColumn);
-        lasku.addAll(Laskut.haeLaskutTietokannasta());
+        lasku.addAll(Lasku.haeLaskutTietokannasta());
         laskuTableView.setItems(lasku);
 
         // Lisää taulukko BorderPaneen
@@ -602,16 +610,16 @@ public class VJ extends Application{
         TableColumn<Palvelut.Palvelu, String> nimiColumn = new TableColumn<>("Nimi");
         TableColumn<Palvelut.Palvelu, String> kuvausColumn = new TableColumn<>("Kuvaus");
         TableColumn<Palvelut.Palvelu, Double> hintaColumn = new TableColumn<>("Hinta");
-        TableColumn<Palvelut.Palvelu, Integer> alue_idColumn = new TableColumn<>("Alue_ID");
+        TableColumn<Palvelut.Palvelu, Integer> alueIDColumn = new TableColumn<>("Alue ID");
 
         // Määrittele miten Palvelu-olioiden kentät liittyvät TableView:n sarakkeisiin
         nimiColumn.setCellValueFactory(new PropertyValueFactory<>("nimi"));
         kuvausColumn.setCellValueFactory(new PropertyValueFactory<>("kuvaus"));
         hintaColumn.setCellValueFactory(new PropertyValueFactory<>("hinta"));
-        alue_idColumn.setCellValueFactory(new PropertyValueFactory<>("alueID"));
+        alueIDColumn.setCellValueFactory(new PropertyValueFactory<>("alue_id"));
 
         // Lisää sarakkeet taulukkoon
-        palveluTableView.getColumns().addAll(nimiColumn, kuvausColumn, hintaColumn, alue_idColumn);
+        palveluTableView.getColumns().addAll(nimiColumn, kuvausColumn, hintaColumn, alueIDColumn);
 
         // Haetaan palvelut tietokannasta ja asetetaan ne TableView:hen
         Palvelut palvelut = new Palvelut();
@@ -643,8 +651,9 @@ public class VJ extends Application{
             Label hintaLabel = new Label("Hinta:");
             TextField hintaTextField = new TextField();
 
-            Label alue_idLabel = new Label("Alue_ID:");
-            TextField alue_idTextField = new TextField();
+            Label alueLbl = new Label("Alue:");
+            ComboBox<String> alueCB = new ComboBox<>();
+            alueCB.setItems(haeAlueetTietokannasta());
 
             Label palveluAlvLabel = new Label("ALV:");
             TextField palveluAlvTextField = new TextField();
@@ -657,12 +666,13 @@ public class VJ extends Application{
                 String palveluKuvaus = kuvausTextField.getText();
                 double palveluHinta = Double.parseDouble(hintaTextField.getText());
                 int palveluAlv = Integer.parseInt(palveluAlvTextField.getText());
-                int palveluAlueID = Integer.parseInt(alue_idTextField.getText());
+                String alueNimi = alueCB.getValue();
+                int alueId = haeAlueId(alueNimi);
 
 
                 // Lisätään palvelu tietokantaan
                 Palvelut uusiPalvelu = new Palvelut();
-                uusiPalvelu.lisaaPalveluTietokantaan(palveluNimi, palveluKuvaus, palveluHinta, palveluAlv, palveluAlueID);
+                uusiPalvelu.lisaaPalveluTietokantaan(palveluNimi, palveluKuvaus, palveluHinta, palveluAlv, alueId);
 
                 // Haetaan päivitetyt palvelut tietokannasta ja päivitetään TableView
                 ObservableList<Palvelut.Palvelu> uudetPalvelut = palvelut.haePalvelutTietokannasta();
@@ -678,7 +688,7 @@ public class VJ extends Application{
                     nimiLabel, nimiTextField,
                     kuvausLabel, kuvausTextField,
                     hintaLabel, hintaTextField,
-                    alue_idLabel, alue_idTextField,
+                    alueLbl, alueCB,
                     palveluAlvLabel, palveluAlvTextField,
                     tallennaButton
             );

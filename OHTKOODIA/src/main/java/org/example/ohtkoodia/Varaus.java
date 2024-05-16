@@ -117,6 +117,28 @@ public class Varaus {
         return data;
     }
 
+    public static int haeViimeisinVarausID() {
+        String url = "jdbc:mysql://localhost:3307/vn";
+        String username = "root";
+        String password = "";
+
+        int viimeisinVarausId = 0;
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String sql = "SELECT MAX(varaus_id) AS max_varaus_id FROM varaus";
+            try (Statement stmt = connection.createStatement();
+                 ResultSet resultSet = stmt.executeQuery(sql)) {
+
+                if (resultSet.next()) {
+                    viimeisinVarausId = resultSet.getInt("max_varaus_id");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return viimeisinVarausId;
+    }
+
     private int varausId;
     private int asiakasId;
     private int mokkiId;
