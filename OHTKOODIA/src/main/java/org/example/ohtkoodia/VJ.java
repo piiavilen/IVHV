@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
@@ -17,21 +18,7 @@ import java.time.LocalDate;
 
 public class VJ extends Application{
 
-    // private Haku haku = new Haku(); // Luo uusi Haku-olio
-    //testivittu
-    // да да pjötr
-
-    //----------------------------METODIT------------------------------------------------------------------------------
-
-    //Source: https://stackoverflow.com/questions/59147960/how-to-insert-into-mysql-database-with-java
-    //https://stackoverflow.com/questions/5005388/cannot-add-or-update-a-child-row-a-foreign-key-constraint-fails
-    //https://stackoverflow.com/questions/59956372/sql-server-foreign-key-constraint-error-but-data-exists
-
-
-
     //----------------------ALUE-METODIT---------------------------
-
-
 
     // Metodi, joka kirjoittaa alueen tiedot tietokantaan
     public void kirjoitaAlueTietokantaan(String nimi) {
@@ -81,8 +68,6 @@ public class VJ extends Application{
 
         return alueId;
     }
-
-
 
     // Metodi, joka hakee kaikki aluenimet tietokannasta
     public ObservableList<String> haeAlueetTietokannasta() {
@@ -214,8 +199,6 @@ public class VJ extends Application{
         return postiNumerot;
     }
 
-
-
     //--------------------------------------UI-------------------------------------------------------------------------
     public void start(Stage primaryStage) throws Exception {
 
@@ -234,10 +217,6 @@ public class VJ extends Application{
         mokkiTabPaneeli.setTop(ylaPaneeli);
         TextField hakuKentta = new TextField();
         hakuKentta.setPromptText("Mökin nimi");
-
-
-//HAKUPAINIKE SIIRRETTY TABLEVIEW OSIOON TOIMINNALLISUUDEN VUOKSI!!!
-
 
         //-----------------------------MÖKKITAULUKKO-------------------------------------
         // Luo TableView
@@ -287,7 +266,7 @@ public class VJ extends Application{
                             });
                             tableView.getColumns().add(column);
                         }
-                        varaukset.remove(0); // Remove column names from data
+                        varaukset.remove(0);
                         tableView.setItems(varaukset);
 
                         // Varauksen tekoa varten informaatiokentät
@@ -422,11 +401,6 @@ public class VJ extends Application{
             };
         });
 
-
-
-
-
-
         // Lisää mökit ObservableListiin
         mokki.addAll(Mokki.haeMokitTietokannasta());
         // Aseta Observablelistin sisältö TableViewiin
@@ -438,14 +412,6 @@ public class VJ extends Application{
             String hakusana = hakuKentta.getText();
             mokkiTableView.setItems(Haku.haeMokitTietokannasta(hakusana));
         });
-        //TÄHÄN TULISI VARAUS-PAINIKKEEN LUONTI JA TOIMINNALLISUUS, PALATAAN TÄHÄN MYÖHEMMIN!!!
-        /*Marjutilla osa tätä koodia ja sen toiminnallisuutta, katsotaan backend-vaiheessa
-        tarkemmin!!
-
-        TableColumn<Mokki, Void> varausbtnColumn = new TableColumn<>("Tee varaus");
-        varausbtnColumn.setCellValueFactory(column -> new TableCell<>()x
-            Button teeVarausbtn = new Button("Tee varaus");
-        */
 
         // Lisää sarakkeet taulukkoon
         mokkiTableView.getColumns().addAll(nimiMOKKIColumn, osoiteMOKKIColumn, postinroMOKKIColumn, hintaMOKKIColumn,
@@ -453,15 +419,6 @@ public class VJ extends Application{
 
         // Lisää taulukko BorderPaneen
         mokkiTabPaneeli.setCenter(mokkiTableView);
-
-        /* Lisää hakutoiminnallisuus haku-painikkeelle
-        hakuBt.setOnAction(e -> {
-            String hakusana = hakuKentta.getText(); // Hae hakusana tekstikentästä
-            ObservableList<Mokki> hakutulokset = haku.haeMokitTietokannasta(hakusana); // Hae mökit hakusanan perusteella
-            mokkiTableView.setItems(hakutulokset); // Päivitä TableView hakutuloksilla
-        });
-
-        HBox.setHgrow(hakuKentta, Priority.ALWAYS);*/
 
         // Button, joka avaa ikkunan, josta syötetään mökkien tietoja tietokantaan
         Button mokkiTiedonSyottoBt = new Button("Lisää uusi mökki");
@@ -493,7 +450,6 @@ public class VJ extends Application{
             ComboBox<String> alueCB = new ComboBox<>();
             alueCB.setItems(haeAlueetTietokannasta());
             Label valitsePostiNroLbl = new Label("Valitse postinumero:");
-            //itse postiNroCB ylempänä, jotta refresh toimii
             postiNroCB.setItems(haePostiNroTietokannasta());
             Label osoiteLbl = new Label("Osoite:");
             TextField osoiteTf = new TextField();
@@ -558,14 +514,14 @@ public class VJ extends Application{
             stage.show();
         });
 
-
         ylaPaneeli.getChildren().addAll(hakuKentta, hakuBt, alueTiedonSyottoBt, mokkiTiedonSyottoBt);
-
 
         //-----------------------------LASKUTAB-------------------------------------
         Tab laskuTab = new Tab("Laskut");
         BorderPane laskuTabPaneeli = new BorderPane();
         laskuTab.setContent(laskuTabPaneeli);
+        Label laskunHallintaLbl = new Label("Klikkaa laskua hallinnoidaksesi sitä");
+        laskuTabPaneeli.setTop(laskunHallintaLbl);
 
         //----------------------------------------------------------TABLEVIEW-----------------------------------------
         // Luo TableView
@@ -586,7 +542,7 @@ public class VJ extends Application{
         TableColumn alvColumn = new TableColumn<Lasku, Integer>("ALV");
         alvColumn.setCellValueFactory(new PropertyValueFactory<Lasku, Integer>("alv"));
 
-        TableColumn maksettuColumn = new TableColumn<Lasku, Integer>("Onko maksettu?");
+        TableColumn maksettuColumn = new TableColumn<Lasku, Integer>("Onko maksettu? (0 = ei, 1 = kyllä)");
         maksettuColumn.setCellValueFactory(new PropertyValueFactory<Lasku, Integer>("maksettu"));
 
         //------------------------------------------------------
@@ -594,6 +550,36 @@ public class VJ extends Application{
         laskuTableView.getColumns().addAll(IdLASKUColumn, IdVARAUSColumn, SummaColumn, alvColumn, maksettuColumn);
         lasku.addAll(Lasku.haeLaskutTietokannasta());
         laskuTableView.setItems(lasku);
+
+        laskuTableView.setRowFactory(e -> {
+            TableRow<Lasku> rivi = new TableRow<>();
+            rivi.setOnMouseClicked(event -> {
+                if (!rivi.isEmpty() && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                    Lasku selectedLasku = rivi.getItem();
+                    Stage stage = new Stage();
+                    stage.setTitle("Hallinnoi laskuja");
+                    VBox laskunHallintaPaneeli = new VBox();
+                    laskunHallintaPaneeli.setSpacing(5);
+
+
+                    Label lahetaLaskuLbl = new Label("Laskutusvaihtoehdot:");
+                    Button paperiLaskuButton = new Button("Tulosta paperilasku");
+                    paperiLaskuButton.setOnAction(p -> {
+                        stage.close();
+                    });
+                    Button sahkoinenLaskuButton = new Button("Lähetä sähköinen lasku");
+                    sahkoinenLaskuButton.setOnAction(p -> {
+                        stage.close();
+                    });
+                    laskunHallintaPaneeli.getChildren().addAll(lahetaLaskuLbl, paperiLaskuButton, sahkoinenLaskuButton);
+
+                    Scene scene = new Scene(laskunHallintaPaneeli, 400, 100);
+                    stage.setScene(scene);
+                    stage.show();
+                }
+            });
+            return rivi;
+        });
 
         // Lisää taulukko BorderPaneen
         laskuTabPaneeli.setCenter(laskuTableView);
